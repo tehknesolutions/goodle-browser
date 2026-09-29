@@ -1,0 +1,30 @@
+name: Diagnóstico Runner Goodle
+
+on:
+  push:
+    branches:
+      - feat/semantic-dictionary-v1
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Runner iniciou
+        run: |
+          echo "GOODLE_RUNNER_OK=1"
+          echo "Evento: ${{ github.event_name }}"
+          echo "SHA: ${{ github.sha }}"
+
+      - name: Checkout mínimo
+        uses: actions/checkout@v4
+
+      - name: Ambiente
+        run: |
+          uname -a
+          git --version
+          node --version || true
+          npm --version || true
+          echo "GOODLE_DIAGNOSTICO_CONCLUIDO=1"

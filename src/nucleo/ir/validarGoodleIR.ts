@@ -3,27 +3,47 @@ import type { FamiliaIR, GoodleIRNode, GoodleIRPrograma } from "./GoodleIR";
 
 export type DiagnosticoIR = {
   caminho: string;
-  codigo: "SEMANTICA_DESCONHECIDA" | "FAMILIA_INVALIDA";
+  codigo: "SEMANTICA_DESCONHECIDA" | "FAMILIA_INVALIDA" | "COMPORTAMENTO_SEM_ACAO" | "PARAMETRO_OBRIGATORIO_AUSENTE";
   mensagem: string;
 };
 
 const familiasValidas = new Set<FamiliaIR>(["estrutura", "dados", "comportamento", "mundo", "execucao"]);
 const semanticasValidas = new Set(DICIONARIO_SEMANTICO_V1.map((item) => item.idCanonico));
 
+const requisitos: Record<string, string[]> = {
+  "comportamento.reacao.quando": ["evento", "fonte", "alvo"],
+  "dados.valor.definir": ["entidade", "propriedade", "valor"],
+  "dados.valor.diminuir": ["entidade", "propriedade", "valor"],
+};
+
+function parametroAusente(valor: unknown): boolean {
+  return valor === undefined || valor === null || (typeof valor === "string" && valor.trim() === "");
+}
+
 function validarNo(no: GoodleIRNode, caminho: string, diagnosticos: DiagnosticoIR[]): void {
   if (!semanticasValidas.has(no.semantica)) {
-    diagnosticos.push({
-      caminho: `${caminho}.semantica`,
-      codigo: "SEMANTICA_DESCONHECIDA",
-      mensagem: `Semântica desconhecida: ${no.semantica}`,
-    });
+    diagnosticos.push({ caminho: `${caminho}.semantica`, codigo: "SEMANTICA_DESCONHECIDA", mensagem: `Semântica desconhecida: ${no.semantica}` });
   }
 
   if (!familiasValidas.has(no.familia)) {
+    diagnosticos.push({ caminho: `${caminho}.familia`, codigo: "FAMILIA_INVALIDA", mensagem: `Família IR inválida: ${String(no.familia)}` });
+  }
+
+  for (const parametro of requisitos[no.semantica] ?? []) {
+    if (parametroAusente(no.parametros?.[parametro])) {
+      diagnosticos.push({
+        caminho: `${caminho}.parametros.${parametro}`,
+        codigo: "PARAMETRO_OBRIGATORIO_AUSENTE",
+        mensagem: `Parâmetro obrigatório ausente: ${parametro}`,
+      });
+    }
+  }
+
+  if (no.semantica === "comportamento.reacao.quando" && (!no.filhos || no.filhos.length === 0)) {
     diagnosticos.push({
-      caminho: `${caminho}.familia`,
-      codigo: "FAMILIA_INVALIDA",
-      mensagem: `Família IR inválida: ${String(no.familia)}`,
+      caminho: `${caminho}.filhos`,
+      codigo: "COMPORTAMENTO_SEM_ACAO",
+      mensagem: "Comportamento reativo precisa de pelo menos uma ação filha",
     });
   }
 
@@ -32,6 +52,6 @@ function validarNo(no: GoodleIRNode, caminho: string, diagnosticos: DiagnosticoI
 
 export function validarGoodleIR(programa: GoodleIRPrograma): DiagnosticoIR[] {
   const diagnosticos: DiagnosticoIR[] = [];
-  programa.nos.forEach((no, indice) => validarNo(no, `nos[${indice}]`, diagnosticos));
+  programa.nos.forEach((item, indice) => validarNo(item, `nos[${indice}]`, diagnosticos));
   return diagnosticos;
 }

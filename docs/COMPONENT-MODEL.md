@@ -4,46 +4,53 @@
 
 **Componente pequeno + composição = sistema complexo.**
 
-## Contrato conceitual
+## Unidade fundamental
 
-Cada componente deve declarar:
+O componente é a unidade de criação reutilizável do Goodle.
+
+Um componente declara:
+
 - identidade;
-- propriedades;
-- estado;
-- eventos;
-- ações;
-- dependências;
-- entradas;
-- saídas;
-- capacidades necessárias;
-- runtime alvo;
+- tipo;
+- nome;
+- versão;
 - configuração;
-- testes.
+- relações de composição.
 
 ## Tipos
 
 ### Aplicação
-Componentes React.
+
+Componentes de interface e aplicação baseados em React.
 
 ### Jogo
-Componentes Phaser.
 
-### Híbrido
-Composição React + Phaser.
+Componentes de mundo e interação 2D baseados em Phaser.
 
 ### Sistema
-Regras, eventos, estado, progressão, inventário, diálogo etc.
+
+Componentes de lógica, estado, regras e comportamento.
 
 ## Composição
 
-Componente A + Componente B + Regra C → experiência.
+Exemplo:
 
-A composição deve ser declarativa sempre que possível.
+`Personagem + Movimento + Vida + Inventário + Diálogo`
+
+não representa cinco projetos diferentes. Representa uma composição que pode formar uma experiência maior.
 
 ## Regra
 
-Não criar um componente gigante quando uma composição de componentes menores resolver o mesmo problema.
+Evitar componentes gigantes quando uma composição de componentes menores resolver o problema.
 
-## Objetivo
+## Regra de simplicidade
 
-Permitir que GAIC gere sistemas complexos como composição de peças compreensíveis e reutilizáveis.
+A API interna pode ser sofisticada. A experiência do criador deve continuar simples.
+
+## PT-BR first
+
+Os nomes exibidos ao criador devem ser PT-BR first. Identificadores técnicos podem usar convenções de código quando necessário.
+
+## Próximo marco
+
+Conectar o registro ao GoodStudio e criar uma primeira experiência React + Phaser a partir de uma composição declarativa.

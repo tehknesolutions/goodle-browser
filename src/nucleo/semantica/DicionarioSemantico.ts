@@ -28,57 +28,62 @@ const removerAcentos = (valor: string) =>
 
 const normalizar = (valor: string) => removerAcentos(valor.trim().toLocaleLowerCase("pt-BR"));
 
+const entrada = (
+  idCanonico: string,
+  termoPtBr: string,
+  aliases: string[],
+  origem: FamiliaOrigem = "goodle",
+  equivalencia: NivelEquivalencia = "direta",
+  exigeOrigem = false,
+): AliasSemantico => ({ idCanonico, termoPtBr, aliases, origem, equivalencia, exigeOrigem });
+
 const aliases: AliasSemantico[] = [
-  {
-    idCanonico: "logica.condicao.se",
-    termoPtBr: "se",
-    origem: "goodle",
-    equivalencia: "direta",
-    aliases: ["se", "if"],
-  },
-  {
-    idCanonico: "logica.condicao.senao",
-    termoPtBr: "senão",
-    origem: "goodle",
-    equivalencia: "direta",
-    aliases: ["senão", "senao", "else"],
-  },
-  {
-    idCanonico: "comportamento.reacao.quando",
-    termoPtBr: "quando",
-    origem: "goodle",
-    equivalencia: "direta",
-    aliases: ["quando", "when"],
-  },
-  {
-    idCanonico: "comportamento.evento",
-    termoPtBr: "evento",
-    origem: "goodle",
-    equivalencia: "direta",
-    aliases: ["evento"],
-  },
-  {
-    idCanonico: "comportamento.acao",
-    termoPtBr: "ação",
-    origem: "goodle",
-    equivalencia: "direta",
-    aliases: ["ação", "acao"],
-  },
-  {
-    idCanonico: "comportamento.emissao",
-    termoPtBr: "emitir",
-    origem: "goodle",
-    equivalencia: "direta",
-    aliases: ["emitir"],
-  },
-  {
-    idCanonico: "comportamento.emissao",
-    termoPtBr: "emitir",
-    origem: "godot",
-    equivalencia: "contextual",
-    aliases: ["signal"],
-    exigeOrigem: true,
-  },
+  // Goodle / OldRewrite — núcleo linguístico
+  entrada("logica.condicao.se", "se", ["se", "if"]),
+  entrada("logica.condicao.senao", "senão", ["senão", "senao", "else"]),
+  entrada("comportamento.reacao.quando", "quando", ["quando", "when"]),
+  entrada("comportamento.evento", "evento", ["evento"]),
+  entrada("comportamento.acao", "ação", ["ação", "acao"]),
+  entrada("comportamento.emissao", "emitir", ["emitir", "emit"]),
+  entrada("estrutura.entidade", "entidade", ["entidade", "entity"]),
+  entrada("estrutura.cena", "cena", ["cena"]),
+  entrada("estrutura.mundo", "mundo", ["mundo"]),
+  entrada("estrutura.mapa", "mapa", ["mapa"]),
+  entrada("estrutura.area", "área", ["área", "area"]),
+  entrada("estrutura.recurso", "recurso", ["recurso"]),
+  entrada("dados.dado", "dado", ["dado"]),
+  entrada("dados.estado", "estado", ["estado"]),
+  entrada("mundo.personagem", "personagem", ["personagem"]),
+  entrada("mundo.objeto", "objeto", ["objeto"]),
+  entrada("mundo.terreno", "terreno", ["terreno"]),
+  entrada("mundo.camera", "câmera", ["câmera", "camera"]),
+
+  // Godot-like
+  entrada("estrutura.entidade", "entidade", ["node"], "godot", "contextual", true),
+  entrada("estrutura.cena", "cena", ["scene"], "godot", "aproximada", true),
+  entrada("estrutura.recurso", "recurso", ["resource"], "godot", "direta", true),
+  entrada("comportamento.emissao", "emitir", ["signal"], "godot", "contextual", true),
+
+  // Phaser-like
+  entrada("estrutura.entidade", "entidade", ["game object", "gameobject"], "phaser", "aproximada", true),
+  entrada("estrutura.cena", "cena", ["scene"], "phaser", "aproximada", true),
+  entrada("mundo.camera", "câmera", ["camera"], "phaser", "direta", true),
+
+  // BYOND-like
+  entrada("estrutura.entidade", "entidade", ["atom"], "byond", "aproximada", true),
+  entrada("mundo.personagem", "personagem", ["mob"], "byond", "contextual", true),
+  entrada("mundo.objeto", "objeto", ["obj"], "byond", "aproximada", true),
+  entrada("mundo.terreno", "terreno", ["turf"], "byond", "contextual", true),
+  entrada("estrutura.area", "área", ["area"], "byond", "aproximada", true),
+  entrada("estrutura.mundo", "mundo", ["world"], "byond", "aproximada", true),
+  entrada("comportamento.acao", "ação", ["proc"], "byond", "contextual", true),
+  entrada("comportamento.acao.usuario", "ação do usuário", ["verb"], "byond", "contextual", true),
+
+  // RPG Maker-like
+  entrada("estrutura.mapa", "mapa", ["map"], "rpg-maker", "aproximada", true),
+  entrada("comportamento.evento", "evento", ["event"], "rpg-maker", "contextual", true),
+  entrada("dados.estado", "estado", ["switch"], "rpg-maker", "contextual", true),
+  entrada("dados.dado", "dado", ["variable"], "rpg-maker", "aproximada", true),
 ];
 
 export function resolverTermoSemantico(
@@ -87,19 +92,22 @@ export function resolverTermoSemantico(
 ): ResolucaoSemantica | undefined {
   const chave = normalizar(termo);
 
-  const entrada = aliases.find((item) => {
-    if (item.exigeOrigem && origem !== item.origem) return false;
-    if (origem && item.origem !== "goodle" && item.origem !== origem) return false;
-    return item.aliases.some((alias) => normalizar(alias) === chave);
-  });
+  const candidatas = aliases.filter((item) =>
+    item.aliases.some((alias) => normalizar(alias) === chave),
+  );
 
-  if (!entrada) return undefined;
+  const encontrada = origem
+    ? candidatas.find((item) => item.origem === origem) ??
+      candidatas.find((item) => item.origem === "goodle" && !item.exigeOrigem)
+    : candidatas.find((item) => item.origem === "goodle" && !item.exigeOrigem);
+
+  if (!encontrada) return undefined;
 
   return {
-    idCanonico: entrada.idCanonico,
-    termoPtBr: entrada.termoPtBr,
-    origem: entrada.origem,
-    equivalencia: entrada.equivalencia,
+    idCanonico: encontrada.idCanonico,
+    termoPtBr: encontrada.termoPtBr,
+    origem: encontrada.origem,
+    equivalencia: encontrada.equivalencia,
     termoOriginal: termo,
   };
 }

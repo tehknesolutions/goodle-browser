@@ -1,5 +1,7 @@
 export * from "./modelo/GoodProjeto";
+export * from "./modelo/SintaxeGoodle";
 export * from "./componentes/RegistroComponentes";
 export * from "./componentes/componentesBase";
 export * from "./componentes/composicao";
 export * from "./validacao/validarGoodProjeto";
+export * from "./sintaxe";

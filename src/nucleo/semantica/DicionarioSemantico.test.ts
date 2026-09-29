@@ -32,10 +32,10 @@ describe("Dicionário Semântico Goodle", () => {
     expect(signal?.origem).toBe("godot");
   });
 
-  it("não resolve alias contextual de engine sem origem suficiente", () => {
-    expect(resolverTermoSemantico("signal")).toBeUndefined();
-    expect(resolverTermoSemantico("proc")).toBeUndefined();
-    expect(resolverTermoSemantico("common event")).toBeUndefined();
+  it("não resolve aliases contextuais sem origem suficiente", () => {
+    for (const termo of ["signal", "proc", "common event", "ready", "collider", "route"]) {
+      expect(resolverTermoSemantico(termo)).toBeUndefined();
+    }
   });
 
   it.each([
@@ -67,30 +67,44 @@ describe("Dicionário Semântico Goodle", () => {
   });
 
   it.each([
-    ["loop", "rpg-maker", "logica.repeticao"],
-    ["break loop", "rpg-maker", "logica.repeticao.parar"],
-    ["input", "godot", "sistema.entrada"],
-    ["input", "phaser", "sistema.entrada"],
-    ["physics", "phaser", "sistema.fisica"],
-    ["animation", "phaser", "sistema.animacao"],
-    ["animationplayer", "godot", "sistema.animacao"],
-    ["event page", "rpg-maker", "comportamento.evento.pagina"],
-    ["common event", "rpg-maker", "comportamento.acao.compartilhada"],
-    ["database", "rpg-maker", "dados.base"],
-    ["client", "byond", "sistema.cliente"],
-    ["savefile", "byond", "persistencia.arquivo"],
-    ["list", "byond", "dados.lista"],
-    ["preload", "godot", "estrutura.recurso.precarregar"],
+    ["loop", "rpg-maker", "logica.repeticao"], ["break loop", "rpg-maker", "logica.repeticao.parar"],
+    ["input", "godot", "sistema.entrada"], ["input", "phaser", "sistema.entrada"],
+    ["physics", "phaser", "sistema.fisica"], ["animation", "phaser", "sistema.animacao"],
+    ["animationplayer", "godot", "sistema.animacao"], ["event page", "rpg-maker", "comportamento.evento.pagina"],
+    ["common event", "rpg-maker", "comportamento.acao.compartilhada"], ["database", "rpg-maker", "dados.base"],
+    ["client", "byond", "sistema.cliente"], ["savefile", "byond", "persistencia.arquivo"],
+    ["list", "byond", "dados.lista"], ["preload", "godot", "estrutura.recurso.precarregar"],
   ] as const)("segunda onda: %s (%s) converge para %s", (termo, origem, id) => {
     expect(resolverTermoSemantico(termo, origem)?.idCanonico).toBe(id);
   });
 
   it.each([
     ["repetir", "logica.repeticao"], ["parar repetição", "logica.repeticao.parar"],
-    ["entrada", "sistema.entrada"], ["física", "sistema.fisica"],
-    ["animacao", "sistema.animacao"], ["lista", "dados.lista"],
-    ["banco", "dados.base"], ["cliente", "sistema.cliente"],
+    ["entrada", "sistema.entrada"], ["física", "sistema.fisica"], ["animacao", "sistema.animacao"],
+    ["lista", "dados.lista"], ["banco", "dados.base"], ["cliente", "sistema.cliente"],
   ] as const)("oferece termo Goodle PT-BR %s para %s", (termo, id) => {
+    expect(resolverTermoSemantico(termo)?.idCanonico).toBe(id);
+  });
+
+  it.each([
+    ["function", "typescript", "comportamento.funcao"], ["component", "react", "estrutura.componente"],
+    ["ready", "godot", "ciclo.pronto"], ["update", "phaser", "ciclo.atualizar"],
+    ["collider", "phaser", "fisica.colisao"], ["timer", "godot", "tempo.temporizador"],
+    ["sound", "phaser", "midia.audio"], ["control", "godot", "interface.elemento"],
+    ["show text", "rpg-maker", "narrativa.dialogo"], ["change items", "rpg-maker", "jogo.inventario"],
+    ["route", "backend", "backend.rota"], ["database", "backend", "backend.persistencia"],
+    ["websocket", "backend", "rede.tempo_real"], ["server", "byond", "rede.servidor"],
+  ] as const)("terceira onda: %s (%s) converge para %s", (termo, origem, id) => {
+    expect(resolverTermoSemantico(termo, origem)?.idCanonico).toBe(id);
+  });
+
+  it.each([
+    ["função", "comportamento.funcao"], ["componente", "estrutura.componente"],
+    ["pronto", "ciclo.pronto"], ["atualizar", "ciclo.atualizar"], ["colisão", "fisica.colisao"],
+    ["temporizador", "tempo.temporizador"], ["áudio", "midia.audio"], ["interface", "interface.elemento"],
+    ["diálogo", "narrativa.dialogo"], ["inventário", "jogo.inventario"], ["rota", "backend.rota"],
+    ["persistência", "backend.persistencia"], ["tempo real", "rede.tempo_real"], ["servidor", "rede.servidor"],
+  ] as const)("terceira onda oferece termo PT-BR %s para %s", (termo, id) => {
     expect(resolverTermoSemantico(termo)?.idCanonico).toBe(id);
   });
 });

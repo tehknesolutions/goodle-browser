@@ -1,61 +1,20 @@
 # G0.1 — GoodProject Core Model
 
 ## Status
-
 **IMPLEMENTAÇÃO INICIAL**
 
-## Objetivo
+O núcleo representa a forma de manifestação de cada componente sem transformar React e Phaser em escolhas de produto.
 
-Criar o primeiro modelo estruturado de projeto do Goodle para que componentes, cenas, regras e intenção possam ser representados sem depender da interface visual.
+### Forma de manifestação
+- visual
+- interativa
+- sistema
+- híbrida
 
-## Modelo
+Isso descreve o que o componente precisa manifestar, não qual tecnologia o usuário deve escolher.
 
-Um `GoodProjeto` contém:
+## Princípio
+O usuário cria em Goodle. React e Phaser permanecem fundamentos internos da manifestação.
 
-- identidade;
-- nome;
-- versão;
-- ambiente;
-- intenção;
-- componentes;
-- cenas;
-- regras;
-- metadados.
-
-## Composição
-
-A composição ocorre pelo registro de componentes e pelas funções de adição de componentes.
-
-## Registro
-
-O `RegistroComponentes` permite:
-
-- registrar;
-- consultar;
-- listar;
-- instanciar componentes.
-
-## Componentes base iniciais
-
-- Painel;
-- Personagem;
-- Movimento;
-- Vida;
-- Inventário;
-- Diálogo.
-
-Eles são apenas componentes de fundação. Não são ainda sistemas completos de produção.
-
-## Validação
-
-O projeto possui uma validação inicial que verifica:
-
-- identidade;
-- nome;
-- intenção;
-- ids duplicados;
-- referências de cena.
-
-## Próxima evolução
-
-Conectar o GoodStudio ao GoodProject para que os componentes selecionados na interface alterem um projeto real.
+## Próximo checkpoint
+Criar os primeiros manifestadores internos React + Phaser sob a fachada única `GoodRuntime`.

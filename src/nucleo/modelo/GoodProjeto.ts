@@ -1,9 +1,6 @@
 export type Ambiente = "aplicacao" | "jogo" | "hibrido";
-
-export type TipoComponente =
-  | "aplicacao"
-  | "jogo"
-  | "sistema";
+export type TipoComponente = "aplicacao" | "jogo" | "sistema";
+export type FormaManifestacao = "visual" | "interativa" | "sistema" | "hibrida";
 
 export interface IntencaoGoodle {
   descricao: string;
@@ -11,24 +8,19 @@ export interface IntencaoGoodle {
   restricoes?: string[];
 }
 
-export interface ConfiguracaoComponente {
-  [chave: string]: unknown;
-}
+export interface ConfiguracaoComponente { [chave: string]: unknown; }
 
 export interface ComponenteGoodle {
   id: string;
   tipo: TipoComponente;
   nome: string;
   versao: string;
+  manifestacao: FormaManifestacao;
   configuracao?: ConfiguracaoComponente;
   componentesFilhos?: string[];
 }
 
-export interface CenaGoodle {
-  id: string;
-  nome: string;
-  componentes: string[];
-}
+export interface CenaGoodle { id: string; nome: string; componentes: string[]; }
 
 export interface RegraGoodle {
   id: string;
@@ -52,12 +44,5 @@ export interface GoodProjeto {
 export function criarGoodProjeto(
   entrada: Pick<GoodProjeto, "id" | "nome" | "ambiente" | "intencao">,
 ): GoodProjeto {
-  return {
-    ...entrada,
-    versao: 1,
-    componentes: [],
-    cenas: [],
-    regras: [],
-    metadados: {},
-  };
+  return { ...entrada, versao: 1, componentes: [], cenas: [], regras: [], metadados: {} };
 }

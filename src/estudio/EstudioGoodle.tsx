@@ -6,8 +6,15 @@ export function EstudioGoodle() {
   return (
     <main className="estudio">
       <header className="cabecalho">
-        <strong>Goodle</strong>
-        <span>Estúdio de criação</span>
+        <div className="marca">
+          <strong>GoodStudio</strong>
+          <span>Meu RPG</span>
+        </div>
+        <div className="acoes-cabecalho">
+          <button type="button">▶ Executar</button>
+          <span>☁ Salvo</span>
+          <span className="avatar">MIG</span>
+        </div>
       </header>
 
       <section className="grade-estudio">
@@ -15,6 +22,12 @@ export function EstudioGoodle() {
         <Previa />
         <EditorIntencao />
       </section>
+
+      <footer className="barra-status">
+        <span>● GoodRuntime</span>
+        <span>React + Phaser + Backend</span>
+        <span>0 erros</span>
+      </footer>
     </main>
   );
 }

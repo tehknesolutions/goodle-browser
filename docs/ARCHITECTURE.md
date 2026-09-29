@@ -8,139 +8,81 @@ Todo o produto, documentação, interface, nomenclatura de domínio, mensagens, 
 
 Inglês só aparece quando for nome técnico de tecnologia/API/biblioteca, termo obrigatório de dependência, identificador de código com justificativa técnica ou interoperabilidade externa.
 
-Quando houver escolha entre inglês e equivalente claro em PT-BR, o PT-BR vence.
-
 ## Princípio central
 
 **Componetização + simplicidade para criar coisas complexas.**
 
 O Goodle permite criar experiências complexas combinando componentes pequenos, previsíveis e reutilizáveis.
 
-Complexidade deve emergir da composição, não da necessidade de compreender uma arquitetura complexa.
+## React + Phaser como fundamentos
 
-## Duas bases de interface/experiência
+React e Phaser são **bases sintáticas e tecnológicas**, não produtos/runtimes separados na experiência do criador.
 
-### React
+O Goodle possui sua própria camada de criação e composição.
 
-React é a base principal para:
-- interface do Goodle;
-- GoodStudio;
-- editor;
-- painéis;
-- inspeção;
-- configuração;
-- gerenciamento de projeto;
-- componentes reutilizáveis;
-- experiências web que não dependem do loop de jogo.
+Ela utiliza:
+- padrões de composição declarativa de React;
+- componentes, propriedades, estado e eventos de React;
+- cenas, entidades, interação, animação, câmera, física e ciclo interativo de Phaser.
 
-### Phaser
+### O criador não escolhe
 
-Phaser é a base principal para:
-- jogos 2D;
-- cenas;
-- sprites;
-- animações;
-- física 2D quando aplicável;
-- entrada/interação de jogo;
-- câmera;
-- áudio de jogo;
-- loops de jogo;
-- experiências interativas 2D.
+O usuário não precisa dizer “vou criar em React” ou “vou criar em Phaser”.
 
-### Regra React × Phaser
+Ele diz o que quer criar.
 
-React controla a **interface e composição da aplicação**.
+O Goodle compõe internamente os recursos necessários.
 
-Phaser controla o **mundo interativo/game loop**.
+## Modelo
 
-Eles podem coexistir na mesma experiência:
+`Intenção Goodle → Composição Goodle → Manifestação React/Phaser → GoodRuntime → Experiência`
 
-React
-├── Menu
-├── HUD
-├── Inventário
-├── Configurações
-└── Phaser
-    ├── Cena
-    ├── Mundo
-    ├── Entidades
-    ├── Física
-    └── Interações
+React e Phaser são fundamentos internos da manifestação, não fronteiras de produto.
 
-O Goodle não deve forçar o usuário a escolher entre React e Phaser quando uma experiência híbrida fizer sentido.
+## Exemplo
 
-## Camada de componentes
+Uma experiência pode conter interface, HUD, menu, personagem, mundo, física, inventário, diálogos, partículas e progressão.
+
+Tudo pertence a uma única composição Goodle. Partes diferentes podem utilizar padrões React ou Phaser internamente sem expor essa separação ao criador.
+
+## Componentes
 
 Tudo que puder ser reutilizado deve virar componente ou sistema composável.
 
-### Componentes de aplicação
-
-Botão, Painel, Modal, Menu, Formulário, Lista, Editor, Inspetor, Barra de ferramentas, Navegação, Notificação.
-
-### Componentes de jogo
-
-Personagem, Inimigo, NPC, Item, Projétil, Portal, Tilemap, Câmera, Zona, Trigger, Partícula, Efeito, Vida, Inventário, Diálogo.
-
-### Componentes de experiência
-
-Cena, Estado, Regra, Evento, Ação, Condição, Variável, Objetivo, Missão, Progressão.
-
-## Composição
-
-A unidade fundamental do Goodle não deve ser a página nem o arquivo.
-
-Deve ser o **componente composável**.
-
-Exemplo:
+A unidade fundamental do Goodle é o **componente composável**.
 
 `Personagem + Movimento + Vida + Inventário + Diálogo + Missão`
 
-gera uma entidade complexa sem exigir que o criador programe todo o sistema do zero.
+forma uma composição única.
 
-## Fluxo arquitetural
+## Fluxo
 
-Intenção
-→ Componentes
-→ Composição
-→ Regras
-→ Eventos
-→ Runtime
-→ Experiência
+Intenção → Componentes → Composição → Regras → Eventos → Manifestação → GoodRuntime → Experiência
 
-GAIC ajuda a converter a intenção em composição.
+GAIC converte intenção em composição.
 
 ## Camadas
 
 GOODLE
-├── Goodle Browser / Studio
-│   └── React
+├── Goodle Browser / GoodStudio
 ├── GoodProject
-├── Component System
+├── Good Component System
 ├── GAIC
 ├── OldRewrite
 ├── OldTable
 ├── GoodEngine
 ├── GoodRuntime
-│   ├── React Runtime
-│   └── Phaser Runtime
+│   └── manifestação React + Phaser
 ├── Capability Broker
 ├── Event / Artifact / Provenance
 └── HEPGA
 
 ## Simplicidade
 
-A arquitetura interna pode ser sofisticada.
+**Complexidade interna. Simplicidade externa.**
 
-A experiência do criador não pode exigir que ele compreenda toda essa sofisticação.
+A arquitetura interna pode ser sofisticada; a experiência do criador não pode exigir que ele compreenda essa sofisticação.
 
-**Regra: complexidade interna, simplicidade externa.**
+## Novas tecnologias
 
-## Regra para novas tecnologias
-
-Uma nova engine, framework ou runtime só entra no núcleo quando demonstrar necessidade que React + Phaser não atendem adequadamente.
-
-A adição de tecnologia deve reduzir complexidade para o criador, não aumentá-la.
-
-## Regra de arquitetura
-
-Nenhum componente de IA deve ser simultaneamente planejador irrestrito e executor irrestrito.
+Só entram no núcleo quando demonstram necessidade real e reduzem a complexidade do Goodle.

@@ -4,53 +4,46 @@
 
 **Componente pequeno + composição = sistema complexo.**
 
-## Unidade fundamental
+## Uma composição
 
-O componente é a unidade de criação reutilizável do Goodle.
+O Goodle possui um modelo único de componentes. Não existe uma biblioteca “React” separada de uma biblioteca “Phaser” para o criador.
 
-Um componente declara:
+Os componentes podem usar diferentes capacidades internas de manifestação.
 
+## Bases sintáticas
+
+React fornece a base conceitual para composição, propriedades, estado, eventos e componentes declarativos.
+
+Phaser fornece a base conceitual para cenas, entidades, interação, animação, câmera, física e mundo 2D.
+
+Essas bases são combinadas pela arquitetura Goodle.
+
+## Contrato
+
+Cada componente pode declarar:
 - identidade;
-- tipo;
-- nome;
-- versão;
+- propriedades;
+- estado;
+- eventos;
+- ações;
+- dependências;
+- entradas;
+- saídas;
+- capacidades;
+- manifestação;
 - configuração;
-- relações de composição.
+- testes.
 
-## Tipos
+## Exemplo
 
-### Aplicação
+O usuário cria **Personagem**.
 
-Componentes de interface e aplicação baseados em React.
+O componente pode internamente combinar propriedades, estado, eventos, visual, movimento, animação e colisão.
 
-### Jogo
+Não existem “Personagem React” e “Personagem Phaser” como conceitos de produto.
 
-Componentes de mundo e interação 2D baseados em Phaser.
+O Goodle resolve a manifestação.
 
-### Sistema
+## Objetivo
 
-Componentes de lógica, estado, regras e comportamento.
-
-## Composição
-
-Exemplo:
-
-`Personagem + Movimento + Vida + Inventário + Diálogo`
-
-não representa cinco projetos diferentes. Representa uma composição que pode formar uma experiência maior.
-
-## Regra
-
-Evitar componentes gigantes quando uma composição de componentes menores resolver o problema.
-
-## Regra de simplicidade
-
-A API interna pode ser sofisticada. A experiência do criador deve continuar simples.
-
-## PT-BR first
-
-Os nomes exibidos ao criador devem ser PT-BR first. Identificadores técnicos podem usar convenções de código quando necessário.
-
-## Próximo marco
-
-Conectar o registro ao GoodStudio e criar uma primeira experiência React + Phaser a partir de uma composição declarativa.
+GAIC deve conseguir gerar sistemas complexos como composição de peças compreensíveis e reutilizáveis.

@@ -41,6 +41,8 @@ const aliases: AliasSemantico[] = [
   // Goodle / OldRewrite — núcleo linguístico
   entrada("logica.condicao.se", "se", ["se", "if"]),
   entrada("logica.condicao.senao", "senão", ["senão", "senao", "else"]),
+  entrada("logica.repeticao", "repetir", ["repetir", "loop"]),
+  entrada("logica.repeticao.parar", "parar repetição", ["parar repetição", "parar repeticao", "break loop"]),
   entrada("comportamento.reacao.quando", "quando", ["quando", "when"]),
   entrada("comportamento.evento", "evento", ["evento"]),
   entrada("comportamento.acao", "ação", ["ação", "acao"]),
@@ -53,21 +55,35 @@ const aliases: AliasSemantico[] = [
   entrada("estrutura.recurso", "recurso", ["recurso"]),
   entrada("dados.dado", "dado", ["dado"]),
   entrada("dados.estado", "estado", ["estado"]),
+  entrada("dados.lista", "lista", ["lista"]),
+  entrada("dados.base", "banco", ["banco", "base de dados"]),
   entrada("mundo.personagem", "personagem", ["personagem"]),
   entrada("mundo.objeto", "objeto", ["objeto"]),
   entrada("mundo.terreno", "terreno", ["terreno"]),
   entrada("mundo.camera", "câmera", ["câmera", "camera"]),
+  entrada("sistema.entrada", "entrada", ["entrada"]),
+  entrada("sistema.fisica", "física", ["física", "fisica"]),
+  entrada("sistema.animacao", "animação", ["animação", "animacao"]),
+  entrada("sistema.cliente", "cliente", ["cliente"]),
+  entrada("persistencia.arquivo", "arquivo persistente", ["arquivo persistente"]),
+  entrada("estrutura.recurso.precarregar", "pré-carregar", ["pré-carregar", "pre-carregar", "precarregar"]),
 
   // Godot-like
   entrada("estrutura.entidade", "entidade", ["node"], "godot", "contextual", true),
   entrada("estrutura.cena", "cena", ["scene"], "godot", "aproximada", true),
   entrada("estrutura.recurso", "recurso", ["resource"], "godot", "direta", true),
+  entrada("estrutura.recurso.precarregar", "pré-carregar", ["preload"], "godot", "contextual", true),
   entrada("comportamento.emissao", "emitir", ["signal"], "godot", "contextual", true),
+  entrada("sistema.entrada", "entrada", ["input"], "godot", "aproximada", true),
+  entrada("sistema.animacao", "animação", ["animationplayer"], "godot", "contextual", true),
 
   // Phaser-like
   entrada("estrutura.entidade", "entidade", ["game object", "gameobject"], "phaser", "aproximada", true),
   entrada("estrutura.cena", "cena", ["scene"], "phaser", "aproximada", true),
   entrada("mundo.camera", "câmera", ["camera"], "phaser", "direta", true),
+  entrada("sistema.entrada", "entrada", ["input"], "phaser", "aproximada", true),
+  entrada("sistema.fisica", "física", ["physics"], "phaser", "aproximada", true),
+  entrada("sistema.animacao", "animação", ["animation"], "phaser", "aproximada", true),
 
   // BYOND-like
   entrada("estrutura.entidade", "entidade", ["atom"], "byond", "aproximada", true),
@@ -78,12 +94,20 @@ const aliases: AliasSemantico[] = [
   entrada("estrutura.mundo", "mundo", ["world"], "byond", "aproximada", true),
   entrada("comportamento.acao", "ação", ["proc"], "byond", "contextual", true),
   entrada("comportamento.acao.usuario", "ação do usuário", ["verb"], "byond", "contextual", true),
+  entrada("sistema.cliente", "cliente", ["client"], "byond", "contextual", true),
+  entrada("persistencia.arquivo", "arquivo persistente", ["savefile"], "byond", "contextual", true),
+  entrada("dados.lista", "lista", ["list"], "byond", "aproximada", true),
 
   // RPG Maker-like
   entrada("estrutura.mapa", "mapa", ["map"], "rpg-maker", "aproximada", true),
   entrada("comportamento.evento", "evento", ["event"], "rpg-maker", "contextual", true),
+  entrada("comportamento.evento.pagina", "página de evento", ["event page"], "rpg-maker", "contextual", true),
+  entrada("comportamento.acao.compartilhada", "ação compartilhada", ["common event"], "rpg-maker", "contextual", true),
   entrada("dados.estado", "estado", ["switch"], "rpg-maker", "contextual", true),
   entrada("dados.dado", "dado", ["variable"], "rpg-maker", "aproximada", true),
+  entrada("dados.base", "banco", ["database"], "rpg-maker", "aproximada", true),
+  entrada("logica.repeticao", "repetir", ["loop"], "rpg-maker", "direta", true),
+  entrada("logica.repeticao.parar", "parar repetição", ["break loop"], "rpg-maker", "direta", true),
 ];
 
 export function resolverTermoSemantico(
@@ -91,10 +115,7 @@ export function resolverTermoSemantico(
   origem?: FamiliaOrigem,
 ): ResolucaoSemantica | undefined {
   const chave = normalizar(termo);
-
-  const candidatas = aliases.filter((item) =>
-    item.aliases.some((alias) => normalizar(alias) === chave),
-  );
+  const candidatas = aliases.filter((item) => item.aliases.some((alias) => normalizar(alias) === chave));
 
   const encontrada = origem
     ? candidatas.find((item) => item.origem === origem) ??

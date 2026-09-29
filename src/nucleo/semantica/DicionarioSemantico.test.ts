@@ -32,22 +32,14 @@ describe("Dicionário Semântico Goodle", () => {
   });
 
   it.each([
-    ["property", "typescript", "dados.propriedade"],
-    ["array", "typescript", "dados.lista"],
-    ["record", "typescript", "dados.dicionario"],
-    ["extends", "typescript", "modelo.heranca"],
-    ["children", "react", "modelo.composicao"],
-    ["instantiate", "godot", "entidade.criar"],
-    ["queue_free", "godot", "entidade.destruir"],
-    ["add_child", "godot", "hierarquia.adicionar_filho"],
-    ["parent", "godot", "hierarquia.pai"],
-    ["transform", "godot", "espaco.transformacao"],
-    ["position", "phaser", "espaco.posicao"],
-    ["sprite", "phaser", "visual.sprite"],
-    ["tilemap", "phaser", "visual.tilemap"],
-    ["follow", "phaser", "camera.seguir"],
-    ["pathfinding", "godot", "navegacao.caminho"],
-    ["state", "goodle", "jogo.estado"],
+    ["property", "typescript", "dados.propriedade"], ["array", "typescript", "dados.lista"],
+    ["record", "typescript", "dados.dicionario"], ["extends", "typescript", "modelo.heranca"],
+    ["children", "react", "modelo.composicao"], ["instantiate", "godot", "entidade.criar"],
+    ["queue_free", "godot", "entidade.destruir"], ["add_child", "godot", "hierarquia.adicionar_filho"],
+    ["parent", "godot", "hierarquia.pai"], ["transform", "godot", "espaco.transformacao"],
+    ["position", "phaser", "espaco.posicao"], ["sprite", "phaser", "visual.sprite"],
+    ["tilemap", "phaser", "visual.tilemap"], ["follow", "phaser", "camera.seguir"],
+    ["pathfinding", "godot", "navegacao.caminho"], ["state", "goodle", "jogo.estado"],
     ["change map", "rpg-maker", "cena.transicao"],
   ] as const)("quarta onda: %s (%s) converge para %s", (termo, origem, id) => {
     expect(resolverTermoSemantico(termo, origem)?.idCanonico).toBe(id);
@@ -64,5 +56,20 @@ describe("Dicionário Semântico Goodle", () => {
     ["estado de jogo", "jogo.estado"], ["transição de cena", "cena.transicao"],
   ] as const)("quarta onda oferece PT-BR %s para %s", (termo, id) => {
     expect(resolverTermoSemantico(termo)?.idCanonico).toBe(id);
+  });
+
+  it.each([
+    ["tocar", "evento.toque"],
+    ["touch", "evento.toque"],
+    ["definir", "dados.valor.definir"],
+    ["set", "dados.valor.definir"],
+    ["diminuir", "dados.valor.diminuir"],
+    ["decrease", "dados.valor.diminuir"],
+  ] as const)("modelo reativo: %s converge para %s", (termo, id) => {
+    expect(resolverTermoSemantico(termo)?.idCanonico).toBe(id);
+  });
+
+  it("não inventa evento desconhecido", () => {
+    expect(resolverTermoSemantico("teletransportar-evento-desconhecido")).toBeUndefined();
   });
 });

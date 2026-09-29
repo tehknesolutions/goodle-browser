@@ -1,34 +1,31 @@
 # GOODLE BROWSER
 
-Goodle is the browser-facing manifestation of the Goodle ecosystem: an AI-native environment for turning human intent into executable digital experiences.
+**Goodle é PT-BR first.**
 
-## Documentation-first status
+Goodle é um ambiente de criação com IA para transformar intenção humana em experiências digitais complexas por meio de componentes simples e composáveis.
 
-This repository is currently being bootstrapped from the consolidated Tehkné Solutions know-how, including:
+## Bases tecnológicas
 
-- TKN-OS architecture and governance patterns
-- GIP (Guided Iterative Precision)
-- Intent → Plan → Capability → Execution → Event → Artifact → Provenance
-- GAIC orchestration
-- OldRewrite and OldTable
-- GoodProject / GoodEngine / GoodRuntime
-- HEPGA experience packaging
-- durable persistence and explicit versioning
-- human validation gates and process commits
-- reference projects and lessons learned
+- **React** — base da interface, GoodStudio, componentes de aplicação e experiências web.
+- **Phaser** — base das experiências de jogo e interações 2D.
+- **React + Phaser** — arquitetura híbrida para experiências que precisam de interface de aplicação + mundo interativo.
 
-See `docs/` for the master documentation set and `docs/ISSUE-MAP.md` for the implementation backlog.
+## Princípio de produto
 
-## Source of truth
+> **Componetização + simplicidade para criar coisas complexas.**
 
-The GitHub repository is the operational source of truth for Goodle. Chat is the architecture/conversation layer; GitHub stores decisions, specifications, issues, implementation history and evidence.
+O criador combina componentes, sistemas, regras e eventos. A complexidade deve surgir da composição.
+
+## PT-BR first
+
+Produto, documentação, UX, mensagens, exemplos e conceitos são escritos primeiro em português do Brasil. Inglês é reservado a APIs, bibliotecas, identificadores técnicos e interoperabilidade quando necessário.
+
+## Arquitetura
+
+Intenção → Componentes → Composição → Regras → Eventos → Runtime → Experiência.
+
+Consulte `docs/ARCHITECTURE.md`, `docs/COMPONENT-MODEL.md` e `docs/00-MASTER-INDEX.md`.
 
 ## Status
 
-**Phase: Foundation / Documentation Bootstrap**
-
-No architecture document in this repository should silently turn an experimental idea into a canonical implementation. Decisions must be marked as DECIDED, EXPERIMENTAL, or CANON/APPROVED.
-
-## Core principle
-
-> Human intent is the source. The Goodle system plans, executes, validates and manifests it without losing traceability.
+Fundação / documentação e arquitetura.

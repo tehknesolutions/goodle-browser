@@ -1,62 +1,146 @@
-# Goodle System Architecture
+# Arquitetura do Goodle
 
-## High-level architecture
+## Regra linguística
+
+**PT-BR first sempre.**
+
+Todo o produto, documentação, interface, nomenclatura de domínio, mensagens, exemplos, templates, prompts, estados, erros e fluxos do Goodle devem nascer em português do Brasil.
+
+Inglês só aparece quando for nome técnico de tecnologia/API/biblioteca, termo obrigatório de dependência, identificador de código com justificativa técnica ou interoperabilidade externa.
+
+Quando houver escolha entre inglês e equivalente claro em PT-BR, o PT-BR vence.
+
+## Princípio central
+
+**Componetização + simplicidade para criar coisas complexas.**
+
+O Goodle permite criar experiências complexas combinando componentes pequenos, previsíveis e reutilizáveis.
+
+Complexidade deve emergir da composição, não da necessidade de compreender uma arquitetura complexa.
+
+## Duas bases de interface/experiência
+
+### React
+
+React é a base principal para:
+- interface do Goodle;
+- GoodStudio;
+- editor;
+- painéis;
+- inspeção;
+- configuração;
+- gerenciamento de projeto;
+- componentes reutilizáveis;
+- experiências web que não dependem do loop de jogo.
+
+### Phaser
+
+Phaser é a base principal para:
+- jogos 2D;
+- cenas;
+- sprites;
+- animações;
+- física 2D quando aplicável;
+- entrada/interação de jogo;
+- câmera;
+- áudio de jogo;
+- loops de jogo;
+- experiências interativas 2D.
+
+### Regra React × Phaser
+
+React controla a **interface e composição da aplicação**.
+
+Phaser controla o **mundo interativo/game loop**.
+
+Eles podem coexistir na mesma experiência:
+
+React
+├── Menu
+├── HUD
+├── Inventário
+├── Configurações
+└── Phaser
+    ├── Cena
+    ├── Mundo
+    ├── Entidades
+    ├── Física
+    └── Interações
+
+O Goodle não deve forçar o usuário a escolher entre React e Phaser quando uma experiência híbrida fizer sentido.
+
+## Camada de componentes
+
+Tudo que puder ser reutilizado deve virar componente ou sistema composável.
+
+### Componentes de aplicação
+
+Botão, Painel, Modal, Menu, Formulário, Lista, Editor, Inspetor, Barra de ferramentas, Navegação, Notificação.
+
+### Componentes de jogo
+
+Personagem, Inimigo, NPC, Item, Projétil, Portal, Tilemap, Câmera, Zona, Trigger, Partícula, Efeito, Vida, Inventário, Diálogo.
+
+### Componentes de experiência
+
+Cena, Estado, Regra, Evento, Ação, Condição, Variável, Objetivo, Missão, Progressão.
+
+## Composição
+
+A unidade fundamental do Goodle não deve ser a página nem o arquivo.
+
+Deve ser o **componente composável**.
+
+Exemplo:
+
+`Personagem + Movimento + Vida + Inventário + Diálogo + Missão`
+
+gera uma entidade complexa sem exigir que o criador programe todo o sistema do zero.
+
+## Fluxo arquitetural
+
+Intenção
+→ Componentes
+→ Composição
+→ Regras
+→ Eventos
+→ Runtime
+→ Experiência
+
+GAIC ajuda a converter a intenção em composição.
+
+## Camadas
 
 GOODLE
-├── Good Browser / Studio
-├── GAIC Orchestrator
-├── GoodProject Model
+├── Goodle Browser / Studio
+│   └── React
+├── GoodProject
+├── Component System
+├── GAIC
 ├── OldRewrite
 ├── OldTable
 ├── GoodEngine
 ├── GoodRuntime
+│   ├── React Runtime
+│   └── Phaser Runtime
 ├── Capability Broker
-├── Event & Artifact System
-├── Provenance
-├── Durable Persistence
-└── HEPGA Packaging
+├── Event / Artifact / Provenance
+└── HEPGA
 
-## Runtime flow
+## Simplicidade
 
-User Intent
-→ Intent Model
-→ Project Model
-→ Execution Plan
-→ Capability checks
-→ OldRewrite / OldTable generation
-→ GoodEngine
-→ GoodRuntime
-→ Events / Artifacts
-→ Validation
-→ Versioned project state
-→ HEPGA package
+A arquitetura interna pode ser sofisticada.
 
-## Separation of responsibilities
+A experiência do criador não pode exigir que ele compreenda toda essa sofisticação.
 
-Good Browser: user-facing environment.
+**Regra: complexidade interna, simplicidade externa.**
 
-Good Studio: creation and inspection interface.
+## Regra para novas tecnologias
 
-GAIC: understands intent, creates plans, coordinates specialized agents and repair loops.
+Uma nova engine, framework ou runtime só entra no núcleo quando demonstrar necessidade que React + Phaser não atendem adequadamente.
 
-GoodProject: canonical project state model.
+A adição de tecnologia deve reduzir complexidade para o criador, não aumentá-la.
 
-OldRewrite: describes entities, behavior and executable intent.
+## Regra de arquitetura
 
-OldTable: describes world rules, constraints and declarative laws.
-
-GoodEngine: interprets/compiles project models.
-
-GoodRuntime: executes the resulting experience.
-
-Capability Broker: controls privileged operations.
-
-Event system: records meaningful state transitions.
-
-Artifact system: stores generated outputs.
-
-Provenance: records why an artifact exists and what produced it.
-
-## Architectural rule
-
-No single AI component should be both unrestricted planner and unrestricted executor.
+Nenhum componente de IA deve ser simultaneamente planejador irrestrito e executor irrestrito.

@@ -1,57 +1,31 @@
-# Goodle Product Design Document (PDD)
+# PDD — Product Design Document
 
-## 1. Product
+## Princípios obrigatórios
 
-Goodle Browser / Goodle Creation Platform.
+### PT-BR first
 
-## 2. Problem
+Todo fluxo voltado ao criador nasce em português do Brasil.
 
-Traditional creation workflows force a human to translate intention into design, architecture, code, assets, testing and deployment as disconnected activities. AI coding tools accelerate individual steps but can still lose state, alter completed functionality, or produce untraceable changes.
+### Composição
 
-## 3. Solution
+O usuário constrói sistemas combinando componentes, sistemas, regras e eventos.
 
-Goodle provides a persistent project model and an AI orchestration layer (GAIC) around a declarative creation language (OldRewrite), a world/rules model (OldTable), a runtime (GoodEngine/GoodRuntime), and a portable package format (HEPGA).
+### Simplicidade
 
-## 4. Primary users
+A superfície de criação deve esconder complexidade desnecessária.
 
-- creators
-- developers
-- designers
-- product builders
-- educators
-- game designers
-- teams using AI-assisted development
+## Bases
 
-## 5. Core user loop
+- React: aplicação, interface e componentes.
+- Phaser: jogos e experiências 2D.
+- React + Phaser: experiências híbridas.
 
-Create project → express intent → inspect plan → generate → preview → test → repair → validate → package/share.
+## Critério de sucesso
 
-## 6. MVP scope
+Um criador deve conseguir expressar uma intenção complexa sem precisar conhecer toda a implementação interna.
 
-- GoodProject model
-- intent capture
-- GAIC planning
-- OldRewrite v0 parser/interpreter
-- OldTable v0
-- basic GoodRuntime
-- browser preview
-- event log
-- artifact registry
-- basic project persistence
-- validation checkpoints
+## Exemplo
 
-## 7. Non-goals for MVP
+Intenção: “crie um jogo de aventura com personagem, inventário, diálogo e inimigos”.
 
-- replacing every browser engine
-- full native OS support
-- autonomous unrestricted machine control
-- final UltraRender implementation
-- generalized multi-agent autonomy without permission boundaries
-
-## 8. Success criteria
-
-- project state survives reload
-- generated changes are traceable
-- user can inspect the plan before execution
-- runtime can reproduce a project from a deterministic project model
-- failed generation can be repaired without silently overwriting validated behavior
+O Goodle deve decompor essa intenção em componentes e sistemas composáveis, permitindo inspeção e edição sem obrigar o criador a escrever toda a implementação manualmente.

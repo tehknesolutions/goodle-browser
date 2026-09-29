@@ -1,14 +1,8 @@
 export type NivelEquivalencia = "direta" | "aproximada" | "contextual" | "com_perda";
 
 export type FamiliaOrigem =
-  | "goodle"
-  | "phaser"
-  | "godot"
-  | "byond"
-  | "rpg-maker"
-  | "typescript"
-  | "react"
-  | "backend";
+  | "goodle" | "phaser" | "godot" | "byond" | "rpg-maker"
+  | "typescript" | "react" | "backend";
 
 export type ResolucaoSemantica = {
   idCanonico: string;
@@ -23,22 +17,15 @@ type AliasSemantico = Omit<ResolucaoSemantica, "termoOriginal"> & {
   exigeOrigem?: boolean;
 };
 
-const removerAcentos = (valor: string) =>
-  valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
+const removerAcentos = (valor: string) => valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const normalizar = (valor: string) => removerAcentos(valor.trim().toLocaleLowerCase("pt-BR"));
-
 const entrada = (
-  idCanonico: string,
-  termoPtBr: string,
-  aliases: string[],
-  origem: FamiliaOrigem = "goodle",
-  equivalencia: NivelEquivalencia = "direta",
-  exigeOrigem = false,
+  idCanonico: string, termoPtBr: string, aliases: string[], origem: FamiliaOrigem = "goodle",
+  equivalencia: NivelEquivalencia = "direta", exigeOrigem = false,
 ): AliasSemantico => ({ idCanonico, termoPtBr, aliases, origem, equivalencia, exigeOrigem });
 
 const aliases: AliasSemantico[] = [
-  // Goodle / OldRewrite — núcleo linguístico
+  // Goodle / OldRewrite — linguagem canônica PT-BR
   entrada("logica.condicao.se", "se", ["se", "if"]),
   entrada("logica.condicao.senao", "senão", ["senão", "senao", "else"]),
   entrada("logica.repeticao", "repetir", ["repetir", "loop"]),
@@ -47,26 +34,32 @@ const aliases: AliasSemantico[] = [
   entrada("comportamento.evento", "evento", ["evento"]),
   entrada("comportamento.acao", "ação", ["ação", "acao"]),
   entrada("comportamento.emissao", "emitir", ["emitir", "emit"]),
+  entrada("comportamento.funcao", "função", ["função", "funcao"]),
   entrada("estrutura.entidade", "entidade", ["entidade", "entity"]),
-  entrada("estrutura.cena", "cena", ["cena"]),
-  entrada("estrutura.mundo", "mundo", ["mundo"]),
-  entrada("estrutura.mapa", "mapa", ["mapa"]),
-  entrada("estrutura.area", "área", ["área", "area"]),
+  entrada("estrutura.componente", "componente", ["componente"]),
+  entrada("estrutura.cena", "cena", ["cena"]), entrada("estrutura.mundo", "mundo", ["mundo"]),
+  entrada("estrutura.mapa", "mapa", ["mapa"]), entrada("estrutura.area", "área", ["área", "area"]),
   entrada("estrutura.recurso", "recurso", ["recurso"]),
-  entrada("dados.dado", "dado", ["dado"]),
-  entrada("dados.estado", "estado", ["estado"]),
-  entrada("dados.lista", "lista", ["lista"]),
-  entrada("dados.base", "banco", ["banco", "base de dados"]),
-  entrada("mundo.personagem", "personagem", ["personagem"]),
-  entrada("mundo.objeto", "objeto", ["objeto"]),
-  entrada("mundo.terreno", "terreno", ["terreno"]),
-  entrada("mundo.camera", "câmera", ["câmera", "camera"]),
-  entrada("sistema.entrada", "entrada", ["entrada"]),
-  entrada("sistema.fisica", "física", ["física", "fisica"]),
-  entrada("sistema.animacao", "animação", ["animação", "animacao"]),
-  entrada("sistema.cliente", "cliente", ["cliente"]),
-  entrada("persistencia.arquivo", "arquivo persistente", ["arquivo persistente"]),
   entrada("estrutura.recurso.precarregar", "pré-carregar", ["pré-carregar", "pre-carregar", "precarregar"]),
+  entrada("dados.dado", "dado", ["dado"]), entrada("dados.estado", "estado", ["estado"]),
+  entrada("dados.lista", "lista", ["lista"]), entrada("dados.base", "banco", ["banco", "base de dados"]),
+  entrada("mundo.personagem", "personagem", ["personagem"]), entrada("mundo.objeto", "objeto", ["objeto"]),
+  entrada("mundo.terreno", "terreno", ["terreno"]), entrada("mundo.camera", "câmera", ["câmera", "camera"]),
+  entrada("sistema.entrada", "entrada", ["entrada"]), entrada("sistema.fisica", "física", ["física", "fisica"]),
+  entrada("sistema.animacao", "animação", ["animação", "animacao"]), entrada("sistema.cliente", "cliente", ["cliente"]),
+  entrada("persistencia.arquivo", "arquivo persistente", ["arquivo persistente"]),
+  entrada("ciclo.pronto", "pronto", ["pronto"]), entrada("ciclo.atualizar", "atualizar", ["atualizar"]),
+  entrada("fisica.colisao", "colisão", ["colisão", "colisao"]),
+  entrada("tempo.temporizador", "temporizador", ["temporizador"]),
+  entrada("midia.audio", "áudio", ["áudio", "audio"]), entrada("interface.elemento", "interface", ["interface"]),
+  entrada("narrativa.dialogo", "diálogo", ["diálogo", "dialogo"]),
+  entrada("jogo.inventario", "inventário", ["inventário", "inventario"]),
+  entrada("backend.rota", "rota", ["rota"]), entrada("backend.persistencia", "persistência", ["persistência", "persistencia"]),
+  entrada("rede.tempo_real", "tempo real", ["tempo real"]), entrada("rede.servidor", "servidor", ["servidor"]),
+
+  // TypeScript / React — base de sintaxe e composição
+  entrada("comportamento.funcao", "função", ["function"], "typescript", "direta", true),
+  entrada("estrutura.componente", "componente", ["component"], "react", "contextual", true),
 
   // Godot-like
   entrada("estrutura.entidade", "entidade", ["node"], "godot", "contextual", true),
@@ -76,6 +69,9 @@ const aliases: AliasSemantico[] = [
   entrada("comportamento.emissao", "emitir", ["signal"], "godot", "contextual", true),
   entrada("sistema.entrada", "entrada", ["input"], "godot", "aproximada", true),
   entrada("sistema.animacao", "animação", ["animationplayer"], "godot", "contextual", true),
+  entrada("ciclo.pronto", "pronto", ["ready"], "godot", "contextual", true),
+  entrada("tempo.temporizador", "temporizador", ["timer"], "godot", "contextual", true),
+  entrada("interface.elemento", "interface", ["control"], "godot", "contextual", true),
 
   // Phaser-like
   entrada("estrutura.entidade", "entidade", ["game object", "gameobject"], "phaser", "aproximada", true),
@@ -84,6 +80,9 @@ const aliases: AliasSemantico[] = [
   entrada("sistema.entrada", "entrada", ["input"], "phaser", "aproximada", true),
   entrada("sistema.fisica", "física", ["physics"], "phaser", "aproximada", true),
   entrada("sistema.animacao", "animação", ["animation"], "phaser", "aproximada", true),
+  entrada("ciclo.atualizar", "atualizar", ["update"], "phaser", "contextual", true),
+  entrada("fisica.colisao", "colisão", ["collider"], "phaser", "contextual", true),
+  entrada("midia.audio", "áudio", ["sound"], "phaser", "aproximada", true),
 
   // BYOND-like
   entrada("estrutura.entidade", "entidade", ["atom"], "byond", "aproximada", true),
@@ -97,6 +96,7 @@ const aliases: AliasSemantico[] = [
   entrada("sistema.cliente", "cliente", ["client"], "byond", "contextual", true),
   entrada("persistencia.arquivo", "arquivo persistente", ["savefile"], "byond", "contextual", true),
   entrada("dados.lista", "lista", ["list"], "byond", "aproximada", true),
+  entrada("rede.servidor", "servidor", ["server"], "byond", "contextual", true),
 
   // RPG Maker-like
   entrada("estrutura.mapa", "mapa", ["map"], "rpg-maker", "aproximada", true),
@@ -108,29 +108,24 @@ const aliases: AliasSemantico[] = [
   entrada("dados.base", "banco", ["database"], "rpg-maker", "aproximada", true),
   entrada("logica.repeticao", "repetir", ["loop"], "rpg-maker", "direta", true),
   entrada("logica.repeticao.parar", "parar repetição", ["break loop"], "rpg-maker", "direta", true),
+  entrada("narrativa.dialogo", "diálogo", ["show text"], "rpg-maker", "contextual", true),
+  entrada("jogo.inventario", "inventário", ["change items"], "rpg-maker", "contextual", true),
+
+  // Backend-like — terceira perna do tripé Goodle
+  entrada("backend.rota", "rota", ["route"], "backend", "contextual", true),
+  entrada("backend.persistencia", "persistência", ["database"], "backend", "contextual", true),
+  entrada("rede.tempo_real", "tempo real", ["websocket"], "backend", "contextual", true),
 ];
 
-export function resolverTermoSemantico(
-  termo: string,
-  origem?: FamiliaOrigem,
-): ResolucaoSemantica | undefined {
+export function resolverTermoSemantico(termo: string, origem?: FamiliaOrigem): ResolucaoSemantica | undefined {
   const chave = normalizar(termo);
   const candidatas = aliases.filter((item) => item.aliases.some((alias) => normalizar(alias) === chave));
-
   const encontrada = origem
-    ? candidatas.find((item) => item.origem === origem) ??
-      candidatas.find((item) => item.origem === "goodle" && !item.exigeOrigem)
+    ? candidatas.find((item) => item.origem === origem) ?? candidatas.find((item) => item.origem === "goodle" && !item.exigeOrigem)
     : candidatas.find((item) => item.origem === "goodle" && !item.exigeOrigem);
-
   if (!encontrada) return undefined;
-
-  return {
-    idCanonico: encontrada.idCanonico,
-    termoPtBr: encontrada.termoPtBr,
-    origem: encontrada.origem,
-    equivalencia: encontrada.equivalencia,
-    termoOriginal: termo,
-  };
+  return { idCanonico: encontrada.idCanonico, termoPtBr: encontrada.termoPtBr, origem: encontrada.origem,
+    equivalencia: encontrada.equivalencia, termoOriginal: termo };
 }
 
 export const DICIONARIO_SEMANTICO_V1 = aliases;

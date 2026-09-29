@@ -6,3 +6,4 @@ export * from "./componentes/composicao";
 export * from "./validacao/validarGoodProjeto";
 export * from "./sintaxe";
 export * from "./semantica";
+export * from "./ir";

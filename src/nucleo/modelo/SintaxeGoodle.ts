@@ -10,6 +10,7 @@ export interface ExpressaoGoodle {
   nome: string;
   parametros?: Record<string, unknown>;
   filhos?: ExpressaoGoodle[];
+  senao?: ExpressaoGoodle[];
 }
 
 export interface FluxoGoodle {

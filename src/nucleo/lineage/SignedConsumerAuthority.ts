@@ -292,9 +292,10 @@ export function createSignedConsumerDecision(input: {
     input.private_key_pem,
   ).toString("base64");
 
+  const { schema: _payloadSchema, ...payloadFields } = payload;
   const unsigned = {
     schema: "goodle.signed-consumer-decision.v1" as const,
-    ...payload,
+    ...payloadFields,
     signed_payload_hash,
     signature_base64,
   };

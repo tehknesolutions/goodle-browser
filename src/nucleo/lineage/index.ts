@@ -29,3 +29,4 @@ export * from "./BrowserRuntimeProof";
 export * from "./VisualRuntimeEvidence";
 export * from "./RuntimeEvidencePackage";
 export * from "./EvidencePackageConsumer";
+export * from "./PublicationRegistry";

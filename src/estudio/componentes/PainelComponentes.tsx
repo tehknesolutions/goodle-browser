@@ -1,4 +1,14 @@
-const secoes = ["Início", "Interface", "Mundo", "Componentes", "Dados", "Lógica", "Backend", "Assets", "Segurança"];
+const secoes = [
+  "Início",
+  "FunSpace",
+  "Interface",
+  "Mundo",
+  "Componentes",
+  "Dados",
+  "Lógica",
+  "Backend",
+  "Segurança",
+];
 
 export function PainelComponentes() {
   return (
@@ -6,7 +16,13 @@ export function PainelComponentes() {
       <div className="titulo-painel">Projeto</div>
       <nav>
         {secoes.map((secao) => (
-          <button className="item-navegacao" key={secao} type="button">{secao}</button>
+          <button
+            className={`item-navegacao${secao === "FunSpace" ? " item-navegacao--funspace" : ""}`}
+            key={secao}
+            type="button"
+          >
+            {secao}
+          </button>
         ))}
       </nav>
     </aside>

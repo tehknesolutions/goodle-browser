@@ -154,3 +154,18 @@ button { cursor: pointer; }
   background: var(--goodle-surface-raised);
   font: 500 11px var(--font-code);
 }
+
+
+.goodle-demo-flow { position:relative; min-height:440px; padding:44px 28px; display:flex; align-items:center; justify-content:center; gap:28px; }
+.goodle-demo-node { width:220px; position:relative; z-index:2; }
+.goodle-demo-connection { width:74px; flex:none; position:relative; z-index:1; }
+.goodle-demo-connection .goodle-connection { width:100%; }
+@media (max-width:1100px) {
+  .goodle-demo-flow { flex-wrap:wrap; }
+}
+@media (max-width:620px) {
+  .goodle-demo-flow { display:grid; grid-template-columns:1fr; gap:20px; }
+  .goodle-demo-node,.goodle-demo-connection { width:min(100%,320px); margin-inline:auto; }
+  .goodle-demo-connection { transform:rotate(90deg); }
+  .goodle-demo-connection .goodle-connection { min-width:100%; }
+}

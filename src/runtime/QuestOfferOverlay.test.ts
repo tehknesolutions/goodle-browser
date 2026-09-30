@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{questOfferView}from"./QuestOfferOverlay";import{createQuest}from"./QuestRules";
+describe("QuestOfferOverlay",()=>{it("shows quest target and rewards",()=>{const q=createQuest(1,"stalker","forest-seed"),v=questOfferView(q);expect(v.title).toContain(q.title);expect(v.objective).toContain(q.target);expect(v.reward).toContain(String(q.rewardXp));expect(v.reward).toContain(String(q.rewardCoins))})});

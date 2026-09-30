@@ -1,0 +1,4 @@
+import {describe,expect,it} from "vitest";
+import {generateWorld} from "./WorldGenerator";
+import {parseCreationIntent} from "./IntentParser";
+describe("WorldGenerator",()=>{it("is deterministic for the same intent and seed",()=>{const p=parseCreationIntent("Crie um RPG top-down com 3 inimigos, 2 obstáculos e objetivo de chegar ao portal");expect(generateWorld(p,42)).toEqual(generateWorld(p,42))});it("keeps spawn clear and portal far from player",()=>{const p=parseCreationIntent("Crie um RPG top-down com 3 inimigos, 2 obstáculos e objetivo de chegar ao portal");const w=generateWorld(p,7),player=w.entities.find(e=>e.kind==="player")!,portal=w.entities.find(e=>e.kind==="portal")!;expect(Math.hypot(portal.x-player.x,portal.y-player.y)).toBeGreaterThan(500);expect(w.width).toBeGreaterThan(640);expect(w.height).toBeGreaterThan(400)});});

@@ -127,11 +127,20 @@ export function capabilityMayExecute(
   request: CapabilityRequest,
   grants: readonly CapabilityGrant[],
 ): boolean {
-  return grants.some((grant) =>
-    grant.status === "active" &&
-    grant.subject.canonical_id === request.subject.canonical_id &&
-    grant.subject.actor_type === request.subject.actor_type &&
-    grant.capability === request.capability &&
-    grant.resource_refs.includes(request.resource_ref),
-  );
+  const requestedAt = Date.parse(request.requested_at);
+  return grants.some((grant) => {
+    const from = Date.parse(grant.valid_from);
+    const until = grant.valid_until ? Date.parse(grant.valid_until) : Number.POSITIVE_INFINITY;
+    const projectMatches = !grant.project_ref || grant.project_ref === request.project_ref;
+    const sessionMatches = !grant.session_ref || grant.session_ref === request.session_ref;
+    return grant.status === "active" &&
+      grant.subject.canonical_id === request.subject.canonical_id &&
+      grant.subject.actor_type === request.subject.actor_type &&
+      grant.capability === request.capability &&
+      grant.resource_refs.includes(request.resource_ref) &&
+      requestedAt >= from &&
+      requestedAt <= until &&
+      projectMatches &&
+      sessionMatches;
+  });
 }

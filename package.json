@@ -15,7 +15,9 @@
     "test:browser": "playwright test",
     "quality:independent": "node scripts/independent-quality-gate.mjs",
     "quality:attest": "node scripts/independent-quality-attestation.mjs create",
-    "quality:verify-attestation": "node scripts/independent-quality-attestation.mjs verify"
+    "quality:verify-attestation": "node scripts/independent-quality-attestation.mjs verify",
+    "quality:sign": "tsx scripts/signed-independent-quality-attestation.ts create",
+    "quality:verify-signature": "tsx scripts/signed-independent-quality-attestation.ts verify"
   },
   "dependencies": {
     "phaser": "^3.90.0",

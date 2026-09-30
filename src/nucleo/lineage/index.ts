@@ -37,3 +37,4 @@ export * from "./UnifiedDistributionRegistry";
 export * from "./DistributionAvailabilityGate";
 export * from "./DistributionAccessChronicle";
 export * from "./DistributionUsageAttestation";
+export * from "./DistributionAuditPackage";

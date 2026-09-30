@@ -9,5 +9,6 @@ export * from "./Inspector";
 export * from "./Connection";
 export * from "./Canvas";
 export * from "./CanvasToolbar";
+export * from "./RunResult";
 export * from "./GoodleMark";
 export * from "./SemanticIcon";

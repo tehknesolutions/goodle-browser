@@ -8,81 +8,14 @@ import { createStudioDraft, updateStudioDraft } from "./StudioDraftState";
 import { GoodleButton, GoodleCommandBar, GoodleMark } from "../ui/goodle";
 
 type Espaco = "studio" | "funspace";
-
-export function EstudioGoodle() {
-  const [draft, setDraft] = useState(createStudioDraft);
-  const [espaco, setEspaco] = useState<Espaco>("studio");
-  const [secao, setSecao] = useState<SecaoGoodStudio>("Início");
-  const [estado, setEstado] = useState("Pronto para criar");
-  const [ultimaIntencao, setUltimaIntencao] = useState("");
-
-  function criar(intencao: string) {
-    setEstado("Processando intenção…");
-    setUltimaIntencao(intencao);
-    setDraft((current) => updateStudioDraft(current, { naturalIntent: intencao }));
-    window.setTimeout(() => setEstado("Intenção aplicada ao workspace local"), 180);
-  }
-
-  function executar() {
-    setEstado(ultimaIntencao || draft.naturalIntent ? "Runtime local preparado · HNK-VERSE externo não solicitado" : "Adicione uma intenção antes de executar");
-  }
-
-  return (
-    <ChronicleProvider>
-      <ManifestationRegistryProvider>
-        <main className="estudio">
-          <header className="cabecalho">
-            <div className="marca">
-              <GoodleMark />
-              <div className="marca__word"><strong>goodle<sup>®</sup></strong><span>Browser</span></div>
-            </div>
-            <GoodleCommandBar placeholder="Alef · Crie qualquer coisa..." onSubmit={criar} />
-            <div className="acoes-cabecalho">
-              <GoodleButton variant="primary" type="button" onClick={executar}>▶ Executar</GoodleButton>
-              <span className="runtime-state">● {estado}</span>
-              <span className="avatar">MIG</span>
-            </div>
-          </header>
-
-          <div className="browser-modebar" role="navigation" aria-label="Espaços do Goodle">
-            <button type="button" className={`browser-mode${espaco === "studio" ? " browser-mode--active" : ""}`} onClick={() => setEspaco("studio")}>GoodStudio</button>
-            <button type="button" className={`browser-mode browser-mode--fun${espaco === "funspace" ? " browser-mode--active" : ""}`} onClick={() => setEspaco("funspace")}>✦ FunSpace</button>
-            <span className="browser-mode-hint">{espaco === "studio" ? `${secao} · construir e manifestar` : "explorar · brincar · testar · manifestar"}</span>
-          </div>
-
-          {espaco === "studio" ? (
-            <section className="grade-estudio">
-              <PainelComponentes ativa={secao} onSelect={(nova) => { setSecao(nova); setEstado(`${nova} aberto`); }} />
-              <div className="workspace-stack">
-                <div className="workspace-context"><span>GoodStudio / {secao}</span>{ultimaIntencao && <strong>✦ {ultimaIntencao}</strong>}</div>
-                <Previa />
-              </div>
-              <EditorIntencao
-                oldRewrite={draft.oldRewrite}
-                naturalIntent={draft.naturalIntent}
-                onOldRewriteChange={(oldRewrite) => setDraft((current) => updateStudioDraft(current, { oldRewrite }))}
-                onNaturalIntentChange={(naturalIntent) => setDraft((current) => updateStudioDraft(current, { naturalIntent }))}
-              />
-            </section>
-          ) : (
-            <section className="funspace-workspace">
-              <div className="funspace-orbit" aria-hidden="true"><GoodleMark /></div>
-              <span className="funspace-kicker">FUNSPACE</span>
-              <h1>Um espaço para experimentar sem quebrar a criação.</h1>
-              <p>Explore ideias, protótipos, mundos e interações. Quando uma intenção estiver pronta, leve-a ao GoodStudio para construção.</p>
-              <div className="funspace-actions">
-                <GoodleButton variant="primary" type="button" onClick={() => setEspaco("studio")}>Manifestar no GoodStudio</GoodleButton>
-                <GoodleButton type="button" onClick={() => setEstado("FunSpace pronto para receber uma intenção pelo Alef")}>Nova experiência</GoodleButton>
-              </div>
-              {ultimaIntencao && <div className="funspace-intent"><small>INTENÇÃO ATIVA</small><strong>{ultimaIntencao}</strong></div>}
-            </section>
-          )}
-
-          <footer className="barra-status">
-            <span>● GoodRuntime</span><span>{espaco === "studio" ? `GoodStudio · ${secao}` : "FunSpace"}</span><span>React + Phaser ready</span><span>HNK-VERSE · externo</span>
-          </footer>
-        </main>
-      </ManifestationRegistryProvider>
-    </ChronicleProvider>
-  );
+export function EstudioGoodle(){
+ const[draft,setDraft]=useState(createStudioDraft),[espaco,setEspaco]=useState<Espaco>("studio"),[secao,setSecao]=useState<SecaoGoodStudio>("Início"),[estado,setEstado]=useState("Pronto para criar"),[ultimaIntencao,setUltimaIntencao]=useState("");
+ function criar(intencao:string){setEstado("Processando intenção…");setUltimaIntencao(intencao);setDraft(c=>updateStudioDraft(c,{naturalIntent:intencao}));window.setTimeout(()=>setEstado("Intenção aplicada ao workspace local"),180)}
+ function executar(){setEstado(ultimaIntencao||draft.naturalIntent?"Runtime local preparado":"Adicione uma intenção antes de executar")}
+ return <ChronicleProvider><ManifestationRegistryProvider><main className="estudio">
+  <header className="cabecalho"><div className="marca"><GoodleMark/><div className="marca__word"><strong>goodle<sup>®</sup></strong><span>CREATE ANYTHING</span></div></div><GoodleCommandBar placeholder="Crie qualquer coisa..." onSubmit={criar}/><div className="acoes-cabecalho"><button className="icon-action" type="button" aria-label="Configurações">⚙</button><GoodleButton variant="primary" type="button" onClick={executar}>▶ Executar</GoodleButton><span className="avatar"><GoodleMark/></span></div></header>
+  <div className="browser-modebar"><button className={`browser-mode${espaco==="studio"?" browser-mode--active":""}`} onClick={()=>setEspaco("studio")}>Projeto</button><button className={`browser-mode${espaco==="funspace"?" browser-mode--active":""}`} onClick={()=>setEspaco("funspace")}>FunSpace</button><span className="browser-mode-hint">{estado}</span></div>
+  {espaco==="studio"?<section className="grade-estudio"><PainelComponentes ativa={secao} onSelect={n=>{setSecao(n);setEstado(`${n} aberto`)}}/><div className="workspace-stack"><div className="workspace-context"><span>Canvas · {secao}</span>{ultimaIntencao&&<strong>◆ {ultimaIntencao}</strong>}</div><Previa/></div><EditorIntencao oldRewrite={draft.oldRewrite} naturalIntent={draft.naturalIntent} onOldRewriteChange={v=>setDraft(c=>updateStudioDraft(c,{oldRewrite:v}))} onNaturalIntentChange={v=>setDraft(c=>updateStudioDraft(c,{naturalIntent:v}))}/></section>:<section className="funspace-workspace"><div className="funspace-orbit"><GoodleMark/></div><span className="funspace-kicker">FUNSPACE</span><h1>Crie, explore e teste experiências.</h1><p>Um espaço vivo para experimentar ideias antes de manifestá-las no projeto.</p><div className="funspace-actions"><GoodleButton variant="primary" onClick={()=>setEspaco("studio")}>Manifestar</GoodleButton><GoodleButton onClick={()=>setEstado("FunSpace pronto")}>+ Nova experiência</GoodleButton></div>{ultimaIntencao&&<div className="funspace-intent"><small>INTENÇÃO</small><strong>{ultimaIntencao}</strong></div>}</section>}
+  <footer className="barra-status"><span className="status-manifest">●</span><span>{espaco==="studio"?`Canvas · ${secao}`:"FunSpace"}</span><span>Goodle Runtime</span><span>React + Phaser</span></footer>
+ </main></ManifestationRegistryProvider></ChronicleProvider>
 }

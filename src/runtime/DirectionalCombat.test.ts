@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {attackZone,knockbackVector,canReceiveHit} from "./DirectionalCombat";
+describe("DirectionalCombat",()=>{it("places attack zone in facing direction",()=>{expect(attackZone(100,100,"right",72)).toEqual({x:136,y:100,width:72,height:48});expect(attackZone(100,100,"up",72).y).toBe(64)});it("computes knockback away from attacker",()=>{const v=knockbackVector(0,0,10,0,180);expect(v.x).toBeGreaterThan(0);expect(v.y).toBe(0)});it("respects invulnerability window",()=>{expect(canReceiveHit(1000,800,250)).toBe(false);expect(canReceiveHit(1100,800,250)).toBe(true)})});

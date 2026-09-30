@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {enemyArchetype} from "./EnemyArchetype";
+describe("EnemyArchetype",()=>{it("varies combat behavior by biome",()=>{expect(enemyArchetype("forest").name).toBe("stalker");expect(enemyArchetype("desert").attackRange).toBeGreaterThan(enemyArchetype("forest").attackRange);expect(enemyArchetype("space").perception).toBeGreaterThan(260)});it("always returns positive combat tuning",()=>{for(const t of ["default","forest","desert","ice","space"] as const){const a=enemyArchetype(t);expect(a.perception).toBeGreaterThan(0);expect(a.attackRange).toBeGreaterThan(0);expect(a.speedScale).toBeGreaterThan(0)}})});

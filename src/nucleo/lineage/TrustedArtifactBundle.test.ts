@@ -50,7 +50,7 @@ const tree: MaterializedArtifactTree = {
   },
 };
 
-function attestation(): BuildAttestationV1 {
+function attestation(entries = [tree.entry]): BuildAttestationV1 {
   const unsigned = {
     schema: "goodle.build-attestation.v1" as const,
     build_id: "build-1",
@@ -65,7 +65,7 @@ function attestation(): BuildAttestationV1 {
       identity_hash: "identity",
     },
     provenance_refs: ["node-1"],
-    artifact_entries: [tree.entry],
+    artifact_entries: entries,
   };
 
   const envelope_hash = sha256Json(unsigned);
@@ -117,16 +117,15 @@ describe("M20 Trusted Artifact Bundle", () => {
     );
   });
 
-  it("rejects artifact entries not covered by attestation", () => {
+  it("rejects artifact entries not covered by a valid attestation", () => {
     expect(() =>
       createTrustedArtifactBundle({
         trees: [tree],
-        attestation: {
-          ...attestation(),
-          artifact_entries: [],
-        },
+        attestation: attestation([]),
       }),
-    ).toThrow("TRUSTED_BUNDLE_ATTESTATION_INVALID");
+    ).toThrow(
+      "TRUSTED_BUNDLE_ENTRY_NOT_ATTESTED: .goodle/generated/src/generated/GoodleArtifact.tsx",
+    );
   });
 
   it("rejects duplicate full paths across trees", () => {

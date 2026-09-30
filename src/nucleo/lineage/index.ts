@@ -11,3 +11,4 @@ export * from "./ReleaseManifest";
 export * from "./ProductionReleaseGate";
 export * from "./ReleaseRollbackEnforcement";
 export * from "./ReleaseRegistry";
+export * from "./EnvironmentPolicyRegistry";

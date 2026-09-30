@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{createInventory,addLoot,consumeLoot,hasLoot}from"./LootInventory";
+describe("LootInventory",()=>{it("stacks identical loot",()=>{let s=createInventory();s=addLoot(s,"frost-core");s=addLoot(s,"frost-core",2);expect(s.items).toEqual([{id:"frost-core",quantity:3}])});it("consumes loot and removes empty stacks",()=>{let s=addLoot(createInventory(),"void-fragment",2);expect(hasLoot(s,"void-fragment",2)).toBe(true);s=consumeLoot(s,"void-fragment",2);expect(s.items).toEqual([])})});

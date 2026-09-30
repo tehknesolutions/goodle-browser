@@ -28,7 +28,7 @@ export interface DadoGoodle {
   valorInicial?: unknown;
 }
 
-export interface RegraGoodle {
+export interface RegraSintaxeGoodle {
   id: string;
   nome: string;
   quando?: ExpressaoGoodle;
@@ -39,5 +39,5 @@ export interface DefinicaoGoodle {
   componentes: string[];
   fluxos: FluxoGoodle[];
   dados: DadoGoodle[];
-  regras: RegraGoodle[];
+  regras: RegraSintaxeGoodle[];
 }

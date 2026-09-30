@@ -20,3 +20,4 @@ export * from "./TrustProofConsumer";
 export * from "./SecureArtifactIntake";
 export * from "./ExecutionAdmissionGate";
 export * from "./RuntimeExecutionChronicle";
+export * from "./ExecutionOutcomeAttestation";

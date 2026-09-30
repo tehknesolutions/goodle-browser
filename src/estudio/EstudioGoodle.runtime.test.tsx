@@ -7,12 +7,14 @@ vi.mock("../runtime/PhaserManifestation", () => ({
 
 import { EstudioGoodle } from "./EstudioGoodle";
 
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
 describe("Goodle Browser runtime flow",()=>{
  it("moves from intent to running to manifested result",()=>{
   vi.useFakeTimers();
   let root:any;
   act(()=>{root=create(<EstudioGoodle/>)});
-  const input=root.root.findByProps({placeholder:"Crie qualquer coisa..."});
+  const input=root.root.findByType("input");
   act(()=>input.props.onChange({target:{value:"Crie um jogo de plataforma"}}));
   act(()=>input.props.onKeyDown({key:"Enter",preventDefault:()=>{}}));
   const execute=root.root.findAllByType("button").find((b:any)=>String(b.props.children).includes("Executar"));

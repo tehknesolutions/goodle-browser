@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+vi.mock("../runtime/PhaserManifestation", () => ({
+  PhaserManifestation: () => null,
+}));
+
 import { EstudioGoodle } from "./EstudioGoodle";
 
 describe("EstudioGoodle", () => {

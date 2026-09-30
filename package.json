@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "check": "tsc -b --pretty false",
     "test": "vitest run",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "quality:independent": "node scripts/independent-quality-gate.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0",

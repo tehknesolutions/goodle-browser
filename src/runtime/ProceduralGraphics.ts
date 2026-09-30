@@ -1,0 +1,6 @@
+import type {ManifestationEntity} from "./ManifestationArtifact";
+import type {WorldTheme} from "./WorldIntentProfile";
+type Shape="circle"|"rect"|"triangle"|"diamond"|"ring";
+export type VisualLayer={shape:Shape;scale:number;alpha:number};
+export type ProceduralVisualPlan={layers:VisualLayer[];animation:"none"|"bob"|"pulse"|"spin";particles:boolean};
+export function proceduralVisualPlan(kind:ManifestationEntity["kind"],theme:WorldTheme):ProceduralVisualPlan{if(kind==="player")return{layers:[{shape:"circle",scale:.38,alpha:1},{shape:"rect",scale:.72,alpha:1},{shape:"triangle",scale:.28,alpha:.9}],animation:"bob",particles:false};if(kind==="enemy")return{layers:[{shape:"circle",scale:.7,alpha:.95},{shape:"triangle",scale:.35,alpha:1},{shape:"circle",scale:.12,alpha:1}],animation:"pulse",particles:false};if(kind==="portal")return{layers:[{shape:"ring",scale:1,alpha:.9},{shape:"ring",scale:.7,alpha:.6},{shape:"diamond",scale:.25,alpha:1}],animation:"spin",particles:true};if(kind==="platform")return{layers:[{shape:"rect",scale:1,alpha:1},{shape:"rect",scale:.88,alpha:.45}],animation:"none",particles:false};const shape:Shape=theme==="forest"?"triangle":theme==="ice"?"diamond":theme==="space"?"circle":"rect";return{layers:[{shape,scale:1,alpha:.9},{shape,scale:.62,alpha:.55}],animation:"none",particles:false}}

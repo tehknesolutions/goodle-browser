@@ -7,4 +7,5 @@ export type ResultadoExecucao =
 export interface RuntimeGoodle {
   suporta(semantica: string): boolean;
   executar(no: GoodleIRNode): ResultadoExecucao;
+  registrar?(comportamento: GoodleIRNode): ResultadoExecucao;
 }

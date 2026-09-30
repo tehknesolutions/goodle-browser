@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Goodle Logo Master V0.2</title>
+  <desc id="desc">Geometric Goodle face with four semantic color fields: gold intention, dark pomegranate knowledge, dark red action, dark green manifestation.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D4A72C"/>
+      <stop offset="1" stop-color="#8F6508"/>
+    </linearGradient>
+    <linearGradient id="pom" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#741827"/>
+      <stop offset="1" stop-color="#3E0810"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A52626"/>
+      <stop offset="1" stop-color="#5A0D0D"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#155A43"/>
+      <stop offset="1" stop-color="#072A20"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="256" cy="256" r="220" fill="#080A09" stroke="#B8860B" stroke-width="10"/>
+
+  <!-- Intention -->
+  <path d="M256 42 A214 214 0 0 1 442 150 L256 256 Z"
+        fill="url(#gold)" stroke="#080A09" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Knowledge -->
+  <path d="M70 150 A214 214 0 0 1 256 42 L256 256 Z"
+        fill="url(#pom)" stroke="#080A09" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Action -->
+  <path d="M442 150 A214 214 0 0 1 442 362 L256 256 Z"
+        fill="url(#red)" stroke="#080A09" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Manifestation -->
+  <path d="M70 362 A214 214 0 0 0 442 362 L256 256 Z"
+        fill="url(#green)" stroke="#080A09" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Mature geometric eyes -->
+  <circle cx="170" cy="238" r="39" fill="#E8E4DA" stroke="#080A09" stroke-width="10"/>
+  <circle cx="342" cy="238" r="39" fill="#E8E4DA" stroke="#080A09" stroke-width="10"/>
+
+  <!-- Minimal expression -->
+  <path d="M218 342 Q256 354 294 342" fill="none" stroke="#080A09" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Structural center -->
+  <path d="M256 52 L256 460" stroke="#080A09" stroke-width="7" opacity=".9"/>
+  <path d="M68 150 L444 362" stroke="#080A09" stroke-width="7" opacity=".9"/>
+  <path d="M444 150 L68 362" stroke="#080A09" stroke-width="7" opacity=".9"/>
+</svg>

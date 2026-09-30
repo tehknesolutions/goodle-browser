@@ -1,0 +1,38 @@
+{
+  "schema": "goodle-hnk-source-manifest/v0.1",
+  "reviewed": "2026-09-29",
+  "sources": [
+    {
+      "repository": "tehknesolutions/HNK-KODE",
+      "ref": "main",
+      "role": "language_domain_haKodan"
+    },
+    {
+      "repository": "tehknesolutions/tehkne-os",
+      "ref": "main",
+      "role": "technology_memory_provenance_security_runtime"
+    },
+    {
+      "repository": "tehknesolutions/HNK-VERSE",
+      "ref": "main",
+      "role": "manifestation_world_runtime_consumer"
+    },
+    {
+      "repository": "tehknesolutions/codex-hnk",
+      "ref": "main",
+      "role": "hnk_root_canon_knowledge_governance"
+    }
+  ],
+  "rules": [
+    "integration_not_absorption",
+    "projection_not_authority",
+    "source_claim_evidence_decision_canon_separation",
+    "intent_plan_execution_event_separation",
+    "no_grant_no_capability",
+    "unknown_hnk_lexeme_unresolved",
+    "human_gate_required_for_canon_promotion",
+    "provenance_survives_transformation",
+    "target_does_not_define_semantics",
+    "mhcm_is_projection_not_parallel_runtime"
+  ]
+}

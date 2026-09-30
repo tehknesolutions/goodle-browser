@@ -39,3 +39,4 @@ export * from "./DistributionAccessChronicle";
 export * from "./DistributionUsageAttestation";
 export * from "./DistributionAuditPackage";
 export * from "./ExternalAuditComplianceGate";
+export * from "./ExternalComplianceRegistry";

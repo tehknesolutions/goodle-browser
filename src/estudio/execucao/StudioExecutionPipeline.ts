@@ -1,9 +1,10 @@
 import { createArtifactBundle, type ArtifactKind } from "../../nucleo/artefatos/ArtifactContract";
-import { addSemanticNode, createSemanticGraph } from "../../nucleo/grafo/SemanticGraph";
+import { compileOldRewrite, type CompilerResult } from "../../nucleo/compiler/CompilerContract";
+import type { SemanticGraph } from "../../nucleo/grafo/SemanticGraph";
 import { semanticGraphToHom } from "../../nucleo/hom/HnkObjectModel";
 import { homToHnkIR } from "../../nucleo/hnkir/HnkIR";
 import { buildChronicle } from "../../nucleo/lineage/Chronicle";
-import { hnkIRToVersePlan } from "../../nucleo/verse/HnkVerseAdapter";
+import { hnkIRToVersePlan, type HnkVersePlan } from "../../nucleo/verse/HnkVerseAdapter";
 import { createVerseExecutionReceipt, type VerseExecutionRequest } from "../../nucleo/verse/HnkVerseExecutionContract";
 import type { CapabilityGrant } from "../../nucleo/contratos/HnkEcosystemContracts";
 import { authorizeVerseExecution } from "../../nucleo/verse/HnkVerseExecutionEvidence";
@@ -18,27 +19,30 @@ export type StudioRuntimeExecutor = (request: VerseExecutionRequest) => Promise<
   executed_at: string;
 }>;
 
-export async function executeStudioIntent(input: {
-  intent: string;
-  grants: readonly CapabilityGrant[];
-  runtimeExecutor: StudioRuntimeExecutor;
-  now: string;
-}): Promise<StudioManifestation> {
-  const intentId = `intent-${crypto.randomUUID()}`;
-  let semanticGraph = createSemanticGraph(`graph-${crypto.randomUUID()}`);
-  semanticGraph.intent_ref = intentId;
-  semanticGraph = addSemanticNode(semanticGraph, {
-    id: intentId,
-    semantic_id: "intent.user",
-    kind: "intent",
-    label: input.intent,
-    authority: "PROPOSED",
-    provenance_refs: [intentId],
-    attributes: { text: input.intent },
-  });
+export type PreparedStudioExecution = {
+  intentId: string;
+  compiler: CompilerResult;
+  semanticGraph: SemanticGraph;
+  versePlan: HnkVersePlan;
+  request: VerseExecutionRequest;
+  hom: ReturnType<typeof semanticGraphToHom>;
+  hnkIR: ReturnType<typeof homToHnkIR>;
+};
 
-  // Parsing semântico completo é responsabilidade do compilador/Good AI.
-  // Sem saída compilada validada, a intenção permanece UNRESOLVED e não é inventada aqui.
+export function prepareStudioExecution(input: {
+  intent: string;
+  now: string;
+  intentId?: string;
+  project_ref?: string;
+}): PreparedStudioExecution {
+  const intentId = input.intentId ?? `intent-${crypto.randomUUID()}`;
+  const compiler = compileOldRewrite(input.intent, { intent_ref: intentId, project_ref: input.project_ref });
+  if (!compiler.executable || !compiler.semantic_graph) {
+    const details = compiler.diagnostics.map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`).join("; ");
+    throw new Error(`COMPILATION_REJECTED: ${details || "compiler produced no executable Semantic Graph"}`);
+  }
+
+  const semanticGraph = compiler.semantic_graph;
   const hom = semanticGraphToHom(semanticGraph);
   const hnkIR = homToHnkIR(hom);
   const versePlan = hnkIRToVersePlan(hnkIR);
@@ -48,8 +52,21 @@ export async function executeStudioIntent(input: {
     runtime: { canonical_id: "service:hnk-verse", actor_type: "service" },
     plan: versePlan,
     intent_ref: intentId,
+    project_ref: input.project_ref,
     requested_at: input.now,
   };
+  return { intentId, compiler, semanticGraph, hom, hnkIR, versePlan, request };
+}
+
+export async function executeStudioIntent(input: {
+  intent: string;
+  grants: readonly CapabilityGrant[];
+  runtimeExecutor: StudioRuntimeExecutor;
+  now: string;
+  project_ref?: string;
+}): Promise<StudioManifestation> {
+  const prepared = prepareStudioExecution(input);
+  const { request, versePlan, hnkIR, hom, semanticGraph } = prepared;
 
   authorizeVerseExecution(request, input.grants);
   const admission = createVerseExecutionReceipt(request);

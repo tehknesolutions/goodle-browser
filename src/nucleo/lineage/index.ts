@@ -42,3 +42,4 @@ export * from "./ExternalAuditComplianceGate";
 export * from "./ExternalComplianceRegistry";
 export * from "./SignedExternalTrustAnchor";
 export * from "./TrustedAuditorKeyRegistry";
+export * from "./SignedAnchorRegistryBinding";

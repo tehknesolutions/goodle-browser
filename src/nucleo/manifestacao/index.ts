@@ -5,4 +5,5 @@ export * from "./ArtifactMaterializer";
 export * from "./ProjectWriter";
 export * from "./BuildOrchestrator";
 export * from "./BuildReport";
+export * from "./BuildCertification";
 export * from "./executores";

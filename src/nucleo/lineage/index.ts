@@ -7,3 +7,4 @@ export * from "./TrustedBundleConsumer";
 export * from "./TrustedDeploymentGate";
 export * from "./DeploymentChronicle";
 export * from "./PromotionPipeline";
+export * from "./ReleaseManifest";

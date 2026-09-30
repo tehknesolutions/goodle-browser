@@ -44,3 +44,4 @@ export * from "./SignedExternalTrustAnchor";
 export * from "./TrustedAuditorKeyRegistry";
 export * from "./SignedAnchorRegistryBinding";
 export * from "./EndToEndExternalTrustProof";
+export * from "./TrustProofConsumerGate";

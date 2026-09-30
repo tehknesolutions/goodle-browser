@@ -5,3 +5,4 @@ export * from "./BuildAttestation";
 export * from "./TrustedArtifactBundle";
 export * from "./TrustedBundleConsumer";
 export * from "./TrustedDeploymentGate";
+export * from "./DeploymentChronicle";

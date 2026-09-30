@@ -1,15 +1,31 @@
 import { expect, test } from "@playwright/test";
+import {
+  createBrowserRuntimeEvidenceProof,
+  verifyBrowserRuntimeEvidenceProof,
+  type BrowserRuntimeObservationV1,
+} from "../../src/nucleo/lineage/BrowserRuntimeProof";
 
-test("M43 mounts React in DOM and boots a real Phaser canvas", async ({ page }) => {
+test("M43 mounts React in DOM, boots Phaser canvas, and binds browser evidence", async ({ page }) => {
   await page.goto("/browser-proof.html");
 
   await page.waitForFunction(() => {
-    return Boolean(window.__GOODLE_BROWSER_PROOF__);
+    return Boolean(
+      (window as Window & {
+        __GOODLE_BROWSER_PROOF__?: BrowserRuntimeObservationV1;
+      }).__GOODLE_BROWSER_PROOF__,
+    );
   });
 
-  const proof = await page.evaluate(() => window.__GOODLE_BROWSER_PROOF__);
+  const observation = await page.evaluate(() => {
+    return (
+      window as Window & {
+        __GOODLE_BROWSER_PROOF__?: BrowserRuntimeObservationV1;
+      }
+    ).__GOODLE_BROWSER_PROOF__;
+  });
 
-  expect(proof).toEqual({
+  expect(observation).toBeDefined();
+  expect(observation).toEqual({
     schema: "goodle.browser-runtime-proof.v1",
     react: {
       mounted: true,
@@ -42,4 +58,31 @@ test("M43 mounts React in DOM and boots a real Phaser canvas", async ({ page }) 
   });
 
   expect(dimensions).toEqual({ width: 320, height: 180 });
+
+  const browserProof = createBrowserRuntimeEvidenceProof({
+    observation: observation!,
+    closed_loop: {
+      proof_id: "closed-loop-m43",
+      closed_loop_hash: "closed-loop-hash-m43",
+      bundle_id: "bundle-m43",
+      execution_id: "execution-m43",
+    },
+  });
+
+  expect(browserProof).toMatchObject({
+    schema: "goodle.browser-runtime-evidence-proof.v1",
+    closed_loop_proof_id: "closed-loop-m43",
+    bundle_id: "bundle-m43",
+    execution_id: "execution-m43",
+    browser_engine: "chromium",
+    react_dom_mounted: true,
+    phaser_canvas_booted: true,
+    phaser_scene_key: "GoodleBrowserProofScene",
+    canvas_width: 320,
+    canvas_height: 180,
+  });
+
+  expect(
+    verifyBrowserRuntimeEvidenceProof(browserProof, observation!),
+  ).toBe(true);
 });

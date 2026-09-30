@@ -9,4 +9,5 @@ export * from "./semantica";
 export * from "./ir";
 export * from "./grafo";
 export * from "./manifestacao";
+export * from "./artefatos";
 export * from "./oldrewrite";

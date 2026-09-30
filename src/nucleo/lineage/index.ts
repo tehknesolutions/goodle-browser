@@ -24,3 +24,4 @@ export * from "./ExecutionOutcomeAttestation";
 export * from "./ClosedLoopTrustProof";
 export * from "./SecurityHardeningGate";
 export * from "./ConcreteRuntimeIntegration";
+export * from "./LiveRuntimeHarness";

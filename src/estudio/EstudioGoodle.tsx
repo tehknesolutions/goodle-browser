@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Previa } from "./componentes/Previa";
 import { EditorIntencao } from "./componentes/EditorIntencao";
 import { PainelComponentes } from "./componentes/PainelComponentes";
 import { ChronicleInspector } from "./componentes/ChronicleInspector";
 import { ChronicleProvider } from "./chronicle/ChronicleStore";
 import { ManifestationRegistryProvider } from "./chronicle/ManifestationRegistry";
+import { createStudioDraft, updateStudioDraft } from "./StudioDraftState";
 import { GoodleButton, GoodleCommandBar } from "../ui/goodle";
 
 export function EstudioGoodle() {
+  const [draft, setDraft] = useState(createStudioDraft);
   return (
     <ChronicleProvider>
       <ManifestationRegistryProvider>
@@ -27,7 +30,12 @@ export function EstudioGoodle() {
           <section className="grade-estudio">
             <PainelComponentes />
             <Previa />
-            <EditorIntencao />
+            <EditorIntencao
+              oldRewrite={draft.oldRewrite}
+              naturalIntent={draft.naturalIntent}
+              onOldRewriteChange={(oldRewrite) => setDraft((current) => updateStudioDraft(current, { oldRewrite }))}
+              onNaturalIntentChange={(naturalIntent) => setDraft((current) => updateStudioDraft(current, { naturalIntent }))}
+            />
           </section>
 
           <ChronicleInspector />

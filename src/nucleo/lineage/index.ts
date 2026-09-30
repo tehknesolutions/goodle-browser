@@ -22,3 +22,4 @@ export * from "./ExecutionAdmissionGate";
 export * from "./RuntimeExecutionChronicle";
 export * from "./ExecutionOutcomeAttestation";
 export * from "./ClosedLoopTrustProof";
+export * from "./SecurityHardeningGate";

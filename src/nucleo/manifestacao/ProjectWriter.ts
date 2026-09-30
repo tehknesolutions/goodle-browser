@@ -1,4 +1,5 @@
 import type { MaterializedArtifactTree, MaterializedFile } from "./ArtifactMaterializer";
+import { joinSafeWorkspacePath } from "./PathSecurity";
 
 export type WorkspaceWriteMode = "DRY_RUN" | "APPLY";
 export type OverwritePolicy = "DENY" | "ALLOW";
@@ -30,26 +31,6 @@ export type ProjectWriteResult = {
   plan: ProjectWriteEntry[];
 };
 
-function normalizeRelativePath(path: string): string {
-  const normalized = path.replace(/\\/g, "/").replace(/^\/+/, "");
-  const segments = normalized.split("/");
-
-  if (
-    !normalized ||
-    segments.some((segment) => segment === ".." || segment === "." || segment === "")
-  ) {
-    throw new Error(`UNSAFE_PROJECT_PATH: ${path}`);
-  }
-
-  return normalized;
-}
-
-function joinRoot(root: string, relativePath: string): string {
-  const cleanRoot = root.replace(/\\/g, "/").replace(/\/+$/, "");
-  const cleanRelative = normalizeRelativePath(relativePath);
-  return cleanRoot ? `${cleanRoot}/${cleanRelative}` : cleanRelative;
-}
-
 export function planProjectWrite(
   request: ProjectWriteRequest,
   sink: Pick<WorkspaceFileSink, "exists">,
@@ -57,7 +38,7 @@ export function planProjectWrite(
   const overwrite = request.overwrite ?? "DENY";
 
   return request.tree.files.map((file) => {
-    const path = joinRoot(request.tree.root, file.path);
+    const path = joinSafeWorkspacePath(request.tree.root, file.path);
     const exists = sink.exists(path);
 
     return {
@@ -76,7 +57,10 @@ export function writeMaterializedProject(
   const mode = request.mode ?? "DRY_RUN";
   const plan = planProjectWrite(request, sink);
   const byPath = new Map(
-    request.tree.files.map((file) => [joinRoot(request.tree.root, file.path), file]),
+    request.tree.files.map((file) => [
+      joinSafeWorkspacePath(request.tree.root, file.path),
+      file,
+    ]),
   );
 
   const written: string[] = [];

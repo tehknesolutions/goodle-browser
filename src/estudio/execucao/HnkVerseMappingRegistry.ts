@@ -1,9 +1,9 @@
-import type { HnkIRNodeKind } from "../../nucleo/hnkir/HnkIR";
+import type { HnkIRKind } from "../../nucleo/hnkir/HnkIR";
 
 export type HnkVerseMappingStatus = "VALIDATED" | "CANDIDATE" | "UNRESOLVED";
 
 export type HnkVerseMappingEntry = {
-  sourceKind: HnkIRNodeKind;
+  sourceKind: HnkIRKind;
   semanticId: string;
   nativeCommand: string | null;
   requiredPayload: readonly string[];
@@ -33,7 +33,7 @@ export const HNK_VERSE_MAPPING_REGISTRY: readonly HnkVerseMappingEntry[] = [
   })),
 ] as const;
 
-export function resolveHnkVerseMapping(sourceKind: HnkIRNodeKind, semanticId: string): HnkVerseMappingEntry {
+export function resolveHnkVerseMapping(sourceKind: HnkIRKind, semanticId: string): HnkVerseMappingEntry {
   return HNK_VERSE_MAPPING_REGISTRY.find((entry) => entry.sourceKind === sourceKind && entry.semanticId === semanticId)
     ?? HNK_VERSE_MAPPING_REGISTRY.find((entry) => entry.sourceKind === sourceKind && entry.semanticId === "*")
     ?? {

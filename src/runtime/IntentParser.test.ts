@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {parseCreationIntent} from "./IntentParser";
+describe("Creation Intent Parser",()=>{it("extracts archetype, counts, obstacles and objective",()=>{const p=parseCreationIntent("Crie um RPG top-down com 3 inimigos, 2 obstáculos e objetivo de chegar ao portal");expect(p.experience).toBe("top-down");expect(p.entities.enemies).toBe(3);expect(p.entities.obstacles).toBe(2);expect(p.objective).toBe("reach-portal");expect(p.camera).toBe("follow-player")});it("keeps safe defaults for short intentions",()=>{const p=parseCreationIntent("Crie um mundo");expect(p.experience).toBe("sandbox");expect(p.entities.enemies).toBe(0);expect(p.objective).toBe("explore")})});

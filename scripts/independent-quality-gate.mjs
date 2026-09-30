@@ -29,6 +29,18 @@ function safe(command, args) {
   }
 }
 
+function trackedDirty() {
+  const unstaged = spawnSync("git", ["diff", "--quiet"]).status;
+  const staged = spawnSync("git", ["diff", "--cached", "--quiet"]).status;
+  return unstaged !== 0 || staged !== 0;
+}
+
+function npmVersion() {
+  const userAgent = process.env.npm_config_user_agent ?? "";
+  const match = userAgent.match(/npm\/([^\s]+)/);
+  return match?.[1] ?? "unknown";
+}
+
 const reportArg = process.argv.indexOf("--report");
 const reportPath = resolve(
   reportArg >= 0 && process.argv[reportArg + 1]
@@ -64,11 +76,11 @@ const report = {
   git: {
     commit_sha: safe("git", ["rev-parse", "HEAD"]),
     branch: safe("git", ["branch", "--show-current"]),
-    dirty: safe("git", ["status", "--porcelain"]) ? true : false,
+    tracked_dirty: trackedDirty(),
   },
   runtime: {
     node: process.version,
-    npm: safe(process.platform === "win32" ? "npm.cmd" : "npm", ["--version"]),
+    npm: npmVersion(),
     platform: process.platform,
     arch: process.arch,
   },

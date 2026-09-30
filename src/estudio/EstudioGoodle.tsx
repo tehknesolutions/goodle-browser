@@ -1,6 +1,7 @@
 import { Previa } from "./componentes/Previa";
 import { EditorIntencao } from "./componentes/EditorIntencao";
 import { PainelComponentes } from "./componentes/PainelComponentes";
+import { ChronicleInspector } from "./componentes/ChronicleInspector";
 import { GoodleButton, GoodleCommandBar } from "../ui/goodle";
 
 export function EstudioGoodle() {
@@ -24,6 +25,8 @@ export function EstudioGoodle() {
         <Previa />
         <EditorIntencao />
       </section>
+
+      <ChronicleInspector />
 
       <footer className="barra-status">
         <span>● GoodRuntime</span>

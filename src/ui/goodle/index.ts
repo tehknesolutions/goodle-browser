@@ -6,3 +6,5 @@ export * from "./Node";
 export * from "./Status";
 export * from "./Sidebar";
 export * from "./Inspector";
+export * from "./Connection";
+export * from "./Canvas";

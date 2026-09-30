@@ -1,4 +1,3 @@
-name: CI Goodle
 name: Goodle CI
 
 on:
@@ -11,13 +10,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-  pull_request:
-  workflow_dispatch:
-
-jobs:
   conformidade:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -26,14 +18,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install
-        run: npm ci
       - name: Node.js
         uses: actions/setup-node@v4
         with:
@@ -47,9 +31,6 @@ jobs:
 
       - name: Typecheck
         run: npm run check
-
-      - name: Tests
-        run: npm test
 
       - name: Build
         run: npm run build

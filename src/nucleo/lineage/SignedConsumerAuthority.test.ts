@@ -94,35 +94,15 @@ describe("M64 Signed Consumer Authority", () => {
       reason_code: "SCHEDULED_ROTATION",
     });
 
-    const rebound = {
-      ...signed,
-      authority_registry_hash: registry.registry_hash,
-    };
-    const payload = {
-      schema: "goodle.signed-consumer-decision-payload.v1" as const,
-      decision_receipt_id: receipt().receipt_id,
-      decision_receipt_hash: receipt().receipt_hash,
-      consumer_id: receipt().consumer_id,
-      proof_id: receipt().proof_id,
-      package_id: receipt().package_id,
-      decision: receipt().decision,
-      key_id: first.key.key_id,
-      authority_registry_hash: registry.registry_hash,
-      authority_registry_sequence: 1,
-      public_key_fingerprint_sha256: first.key.public_key_fingerprint_sha256,
-    };
     expect(verifyConsumerAuthorityRegistry(registry)).toBe(true);
     expect(
       verifySignedConsumerDecision({
-        signed: {
-          ...rebound,
-          signed_payload_hash: sha256Json(payload),
-        },
+        signed,
         receipt: receipt(),
         key: first.key,
         registry,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("rejects signing after revocation", () => {

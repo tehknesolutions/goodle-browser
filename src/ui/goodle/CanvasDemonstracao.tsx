@@ -1,4 +1,4 @@
-import { GoodleCanvas, GoodleConnection, GoodleNode } from "../ui/goodle";
+import { GoodleCanvas, GoodleConnection, GoodleNode } from "./index";
 
 export function CanvasDemonstracao() {
   return (

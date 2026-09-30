@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import type { SemanticGraph } from "../nucleo/grafo/SemanticGraph";
 import {
   buildGoodleProject,
+  createBuildReport,
   GOODLE_RUNTIME_EXECUTORS_V1,
   type WorkspaceFileSink,
 } from "../nucleo/manifestacao";
@@ -61,7 +62,7 @@ export function runBuildCommand(args: string[]) {
   const parsed = parseBuildArgs(args);
   const graph = JSON.parse(readFileSync(parsed.graphPath, "utf8")) as SemanticGraph;
 
-  return buildGoodleProject({
+  const result = buildGoodleProject({
     graph,
     target: {
       kind: parsed.kind as never,
@@ -74,13 +75,15 @@ export function runBuildCommand(args: string[]) {
     overwrite: parsed.overwrite,
     root: parsed.root,
   });
+
+  return createBuildReport(result);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   try {
-    const result = runBuildCommand(process.argv.slice(2));
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(result.status === "BLOCKED" ? 2 : 0);
+    const report = runBuildCommand(process.argv.slice(2));
+    console.log(JSON.stringify(report, null, 2));
+    process.exit(report.status === "BLOCKED" ? 2 : 0);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);

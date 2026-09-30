@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{canInteract,createNpc,nextDialogue}from"./NpcInteraction";
+describe("NpcInteraction",()=>{it("detects interaction range",()=>{const n=createNpc("guide","Guide",100,100);expect(canInteract(n,140,100)).toBe(true);expect(canInteract(n,200,100)).toBe(false)});it("advances dialogue without exceeding final line",()=>{const n=createNpc("guide","Guide",0,0);expect(nextDialogue(0,n)).toBe(1);expect(nextDialogue(1,n)).toBe(1)})});

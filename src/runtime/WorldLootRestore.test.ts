@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{restoreWorldLoot}from"./WorldLootRestore";
+describe("WorldLootRestore",()=>{it("returns only loot not already collected",()=>{const drops=[{id:"forest-seed",x:10,y:20,collected:false},{id:"healing-core",x:30,y:40,collected:false}];const r=restoreWorldLoot(drops,["forest-seed:10:20"]);expect(r).toHaveLength(1);expect(r[0].id).toBe("healing-core")})});

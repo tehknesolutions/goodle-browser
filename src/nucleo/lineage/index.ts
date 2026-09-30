@@ -19,3 +19,4 @@ export * from "./UnifiedTrustProof";
 export * from "./TrustProofConsumer";
 export * from "./SecureArtifactIntake";
 export * from "./ExecutionAdmissionGate";
+export * from "./RuntimeExecutionChronicle";

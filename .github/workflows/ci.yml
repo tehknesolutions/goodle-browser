@@ -1,20 +1,32 @@
-name: CI Goodle Diagnostic
+name: Goodle CI
 
 on:
   push:
-    branches:
-      - fix/ci-runner-diagnostic
   pull_request:
   workflow_dispatch:
 
 jobs:
-  diagnostico:
+  conformidade:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+
     steps:
-      - name: Runner iniciou
-        run: |
-          echo "GOODLE_CI_RUNNER_OK"
-          uname -a
-          node --version || true
-          npm --version || true
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Testes
+        run: npm test
+
+      - name: Typecheck
+        run: npm run check
+
+      - name: Build
+        run: npm run build

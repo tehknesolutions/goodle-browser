@@ -1,0 +1,8 @@
+import type{Quest}from"./QuestRules";import{acceptNpcQuest,createNpcQuestService,declineNpcQuest,offerNpcQuest,syncNpcQuest,turnInNpcQuest,type NpcQuestService}from"./NpcQuestService";
+export type NpcQuestRuntime={service:NpcQuestService;offerVisible:boolean;rewardClaimed:boolean;pendingReward:{xp:number;coins:number}|null};
+export const createNpcQuestRuntime=():NpcQuestRuntime=>({service:createNpcQuestService(),offerVisible:false,rewardClaimed:false,pendingReward:null});
+export function openQuestOffer(s:NpcQuestRuntime,q:Quest):NpcQuestRuntime{const service=offerNpcQuest(s.service,q);return{...s,service,offerVisible:service.status==="offered"}}
+export function chooseQuestOffer(s:NpcQuestRuntime,choice:"accept"|"decline"):NpcQuestRuntime{return{...s,service:choice==="accept"?acceptNpcQuest(s.service):declineNpcQuest(s.service),offerVisible:false}}
+export function syncQuestProgress(s:NpcQuestRuntime,q:Quest):NpcQuestRuntime{return{...s,service:syncNpcQuest(s.service,q)}}
+export function turnInCompletedQuest(s:NpcQuestRuntime):NpcQuestRuntime{if(s.rewardClaimed)return{...s,pendingReward:null};const service=turnInNpcQuest(s.service);if(service.status!=="rewarded"||!service.reward)return{...s,service,pendingReward:null};return{...s,service,rewardClaimed:true,pendingReward:service.reward}}
+export function consumeNpcQuestReward(s:NpcQuestRuntime):NpcQuestRuntime{return{...s,pendingReward:null}}

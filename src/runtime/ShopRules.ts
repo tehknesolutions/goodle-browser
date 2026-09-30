@@ -1,0 +1,6 @@
+import{addLoot,consumeLoot,hasLoot,type InventoryState}from"./LootInventory";
+export type ShopItem={id:string;buy:number;sell:number};export type ShopState={items:ShopItem[]};export type ShopResult={ok:boolean;coins:number;inventory:InventoryState;reason?:"missing-item"|"insufficient-coins"|"not-owned"};
+const find=(s:ShopState,id:string)=>s.items.find(x=>x.id===id);
+export function buyItem(s:ShopState,inventory:InventoryState,coins:number,id:string):ShopResult{const item=find(s,id);if(!item)return{ok:false,coins,inventory,reason:"missing-item"};if(coins<item.buy)return{ok:false,coins,inventory,reason:"insufficient-coins"};return{ok:true,coins:coins-item.buy,inventory:addLoot(inventory,id)}}
+export function sellItem(s:ShopState,inventory:InventoryState,coins:number,id:string):ShopResult{const item=find(s,id);if(!item)return{ok:false,coins,inventory,reason:"missing-item"};if(!hasLoot(inventory,id))return{ok:false,coins,inventory,reason:"not-owned"};return{ok:true,coins:coins+item.sell,inventory:consumeLoot(inventory,id)}}
+export const createDefaultShop=():ShopState=>({items:[{id:"healing-core",buy:20,sell:10},{id:"forest-seed",buy:30,sell:15},{id:"frost-core",buy:40,sell:20},{id:"void-fragment",buy:60,sell:30}]});

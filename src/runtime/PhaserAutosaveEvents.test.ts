@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{shouldAutosave}from"./PhaserAutosaveEvents";
+describe("PhaserAutosaveEvents",()=>{it("saves every persistent gameplay mutation",()=>{for(const e of ["damage","loot","enemy-reward","quest","shop","turn-in","portal"] as const)expect(shouldAutosave(e)).toBe(true)});it("does not save transient UI actions",()=>{expect(shouldAutosave("dialogue")).toBe(false)})});

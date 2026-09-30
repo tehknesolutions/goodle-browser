@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{createInventory}from"./LootInventory";import type{PhaserShopSnapshot}from"./PhaserShopController";
+describe("PhaserShopController snapshot",()=>{it("uses the game economy snapshot shape",()=>{const s:PhaserShopSnapshot={inventory:createInventory(),coins:25,hp:60,maxHp:100};expect(s.coins).toBe(25);expect(s.hp).toBe(60);expect(s.maxHp).toBe(100)})});

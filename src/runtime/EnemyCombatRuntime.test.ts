@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {createEnemyCombatState,decideEnemyCombat} from "./EnemyCombatRuntime";
+describe("EnemyCombatRuntime",()=>{it("emits one attack pulse after windup",()=>{let s=createEnemyCombatState();let d=decideEnemyCombat(s,0,40);s=d.state;expect(d.windup).toBe(true);d=decideEnemyCombat(s,400,40);expect(d.attack).toBe(true);s=d.state;d=decideEnemyCombat(s,401,40);expect(d.attack).toBe(false);expect(d.stop).toBe(true)});it("chases perceived targets without attacking",()=>{const d=decideEnemyCombat(createEnemyCombatState(),0,180);expect(d.move).toBe(true);expect(d.attack).toBe(false)})});

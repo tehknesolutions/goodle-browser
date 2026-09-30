@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{M9_VERTICAL_SLICE,isVerticalSliceReady}from"./VerticalSliceStatus";
+describe("M9 status",()=>{it("requires the complete playable capability set",()=>{expect(Object.keys(M9_VERTICAL_SLICE)).toEqual(expect.arrayContaining(["combat","enemyAI","rewards","loot","quest","npc","shop","portalVictory","playerSave","worldSave","hud"]));expect(isVerticalSliceReady()).toBe(true)})});

@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{restoreGeneratedLoot}from"./WorldLootRestore";
+describe("WorldLootRestore",()=>{it("returns only uncollected generated drops",()=>{const r=restoreGeneratedLoot(["forest-seed:10:20","healing-core:30:40"],["forest-seed:10:20"]);expect(r).toHaveLength(1);expect(r[0].id).toBe("healing-core")});it("ignores malformed generated loot ids",()=>{expect(restoreGeneratedLoot(["bad"],[])).toEqual([])})});

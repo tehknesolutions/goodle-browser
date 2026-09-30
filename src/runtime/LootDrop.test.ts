@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{createLootDrop,canCollect,collectLoot}from"./LootDrop";
+describe("LootDrop",()=>{it("creates a collectible drop",()=>{const d=createLootDrop("sun-shard",10,20);expect(d.collected).toBe(false);expect(canCollect(d,20,20)).toBe(true)});it("marks a drop collected",()=>{const d=collectLoot(createLootDrop("frost-core",0,0));expect(d.collected).toBe(true);expect(canCollect(d,0,0)).toBe(false)})});

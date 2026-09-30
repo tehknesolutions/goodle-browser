@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{createInventory,addLoot}from"./LootInventory";import{createShopBridge,buyFromShop,sellToShop,useShopHealing}from"./ShopPhaserBridge";
+describe("ShopPhaserBridge",()=>{it("hydrates and returns runtime economy state",()=>{let inv=addLoot(createInventory(),"forest-seed");let s=createShopBridge(inv,50,40,100);s=buyFromShop(s,"healing-core");expect(s.coins).toBe(30);expect(s.inventory.items.some(x=>x.id==="healing-core")).toBe(true);s=useShopHealing(s);expect(s.hp).toBe(70);s=sellToShop(s,"forest-seed");expect(s.coins).toBe(45)})});

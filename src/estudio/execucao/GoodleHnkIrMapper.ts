@@ -1,4 +1,5 @@
 import type { HnkIRProgram, HnkIRNode } from "../../nucleo/hnkir/HnkIR";
+import { resolveHnkVerseMapping } from "./HnkVerseMappingRegistry";
 
 export type NativeHnkVerseCommand = {
   commandId: string;
@@ -27,14 +28,28 @@ export type GoodleVerseMappingContext = {
 };
 
 function mapNode(node: HnkIRNode, context: GoodleVerseMappingContext, index: number): NativeHnkVerseCommand {
-  // v0.1 maps only the native command whose semantics are already confirmed by HNK-VERSE.
-  // Other kinds remain unresolved rather than being coerced into unrelated commands.
-  if (node.kind !== "ENTITY") {
+  const mapping = resolveHnkVerseMapping(node.kind, node.semantic_id);
+  if (mapping.status !== "VALIDATED" || !mapping.nativeCommand) {
     throw new Error(`HNK_VERSE_MAPPING_UNRESOLVED: ${node.kind} (${node.semantic_id})`);
   }
+
+  const payload: Record<string, unknown> = {
+    sourceKind: node.kind,
+    semanticId: node.semantic_id,
+    sourceRef: node.id,
+    sourceAuthority: node.authority,
+    provenanceRefs: [...node.provenance_refs],
+    data: node.payload,
+    mappingVersion: mapping.version,
+  };
+  const missingPayload = mapping.requiredPayload.filter((field) => !(field in payload));
+  if (missingPayload.length > 0) {
+    throw new Error(`HNK_VERSE_MAPPING_INVALID_PAYLOAD: ${missingPayload.join(",")}`);
+  }
+
   return {
     commandId: `${context.correlationId}-command-${index + 1}`,
-    commandType: "CraftEntity",
+    commandType: mapping.nativeCommand,
     schemaVersion: 1,
     actorId: context.actorId,
     verseId: context.verseId,
@@ -44,15 +59,8 @@ function mapNode(node: HnkIRNode, context: GoodleVerseMappingContext, index: num
     issuedAtReal: context.issuedAt,
     issuedAtWorld: context.issuedAt,
     correlationId: context.correlationId,
-    idempotencyKey: `${context.correlationId}:${node.id}:CraftEntity`,
-    payload: {
-      sourceKind: node.kind,
-      semanticId: node.semantic_id,
-      sourceRef: node.id,
-      sourceAuthority: node.authority,
-      provenanceRefs: [...node.provenance_refs],
-      data: node.payload,
-    },
+    idempotencyKey: `${context.correlationId}:${node.id}:${mapping.nativeCommand}`,
+    payload,
   };
 }
 

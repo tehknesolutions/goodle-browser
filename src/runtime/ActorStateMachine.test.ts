@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {createActorState,reduceActorState} from "./ActorStateMachine";
+describe("ActorStateMachine",()=>{it("tracks facing and movement",()=>{let s=createActorState();s=reduceActorState(s,{type:"move",x:-1,y:0});expect(s.facing).toBe("left");expect(s.motion).toBe("run");s=reduceActorState(s,{type:"move",x:0,y:0});expect(s.motion).toBe("idle")});it("supports attack hit and death priority",()=>{let s=createActorState();s=reduceActorState(s,{type:"attack"});expect(s.motion).toBe("attack");s=reduceActorState(s,{type:"hit"});expect(s.motion).toBe("hit");s=reduceActorState(s,{type:"death"});expect(s.motion).toBe("death");expect(reduceActorState(s,{type:"move",x:1,y:0}).motion).toBe("death")})});

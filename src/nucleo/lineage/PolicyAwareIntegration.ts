@@ -109,7 +109,7 @@ export function promotePolicyAwareReleasedBuildToProduction(input: {
     input.production.environment,
   );
 
-  getTrustedBundlePolicyForEnvironment(
+  const destinationPolicy = getTrustedBundlePolicyForEnvironment(
     input.registry,
     input.production.environment,
     input.bundle.attestation.target,
@@ -121,27 +121,17 @@ export function promotePolicyAwareReleasedBuildToProduction(input: {
     input.release.status,
   );
 
-  const transition = {
-    from: input.source.environment,
-    to: input.production.environment,
-  };
-
-  const releaseWithRegistryPolicy: ReleaseManifestV1 = {
-    ...input.release,
-    promotion_policy: {
-      allowed_transitions: [transition],
-      destination_policy: getTrustedBundlePolicyForEnvironment(
-        input.registry,
-        input.production.environment,
-        input.bundle.attestation.target,
-      ),
-    },
-  };
-
   return promoteReleasedBuildToProduction({
     source: input.source,
     production: input.production,
     bundle: input.bundle,
-    release: releaseWithRegistryPolicy,
+    release: input.release,
+    promotion_policy_override: {
+      allowed_transitions: [{
+        from: input.source.environment,
+        to: input.production.environment,
+      }],
+      destination_policy: destinationPolicy,
+    },
   });
 }

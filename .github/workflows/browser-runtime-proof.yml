@@ -5,6 +5,8 @@ on:
     paths:
       - "browser-proof.html"
       - "src/browser-proof/**"
+      - "src/nucleo/lineage/BrowserRuntimeProof.ts"
+      - "src/nucleo/lineage/VisualRuntimeEvidence.ts"
       - "tests/browser/**"
       - "playwright.config.ts"
       - "package.json"
@@ -22,3 +24,12 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - name: Upload browser runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: goodle-browser-runtime-evidence
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: ignore

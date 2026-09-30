@@ -13,7 +13,9 @@
     "check": "tsc -b --pretty false",
     "test": "vitest run",
     "test:browser": "playwright test",
-    "quality:independent": "node scripts/independent-quality-gate.mjs"
+    "quality:independent": "node scripts/independent-quality-gate.mjs",
+    "quality:attest": "node scripts/independent-quality-attestation.mjs create",
+    "quality:verify-attestation": "node scripts/independent-quality-attestation.mjs verify"
   },
   "dependencies": {
     "phaser": "^3.90.0",

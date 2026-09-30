@@ -1,5 +1,14 @@
 import type { AuthorityState } from "../contratos/HnkEcosystemContracts";
-import type { SemanticGraph, SemanticNode } from "../grafo/SemanticGraph";
+import type { SemanticGraph, SemanticNode, SemanticRelationKind } from "../grafo/SemanticGraph";
+
+export type HomRelation = {
+  id: string;
+  source: string;
+  target: string;
+  relation: SemanticRelationKind;
+  authority: AuthorityState;
+  provenance_refs: string[];
+};
 
 export type HomObject = {
   id: string;
@@ -7,7 +16,7 @@ export type HomObject = {
   authority: AuthorityState;
   state: Record<string, unknown>;
   components: string[];
-  relations: string[];
+  relations: HomRelation[];
   behaviors: string[];
   events: string[];
   narrative?: string;
@@ -22,6 +31,7 @@ export type HnkObjectModel = {
   schema: "hnk-hom/v0.1";
   graph_ref: string;
   objects: HomObject[];
+  relations: HomRelation[];
 };
 
 function nodeToHom(node: SemanticNode): HomObject {
@@ -45,13 +55,23 @@ function nodeToHom(node: SemanticNode): HomObject {
 export function semanticGraphToHom(graph: SemanticGraph): HnkObjectModel {
   const objects = graph.nodes.map(nodeToHom);
   const byId = new Map(objects.map((object) => [object.id, object]));
-  for (const relation of graph.relations) {
+  const relations: HomRelation[] = graph.relations.map((relation) => ({
+    id: relation.id,
+    source: relation.source,
+    target: relation.target,
+    relation: relation.relation,
+    authority: relation.authority,
+    provenance_refs: [...relation.provenance_refs],
+  }));
+
+  for (const relation of relations) {
     const source = byId.get(relation.source);
     if (!source) continue;
-    source.relations.push(relation.id);
+    source.relations.push(relation);
     if (relation.relation === "contains") source.components.push(relation.target);
     if (relation.relation === "triggers") source.events.push(relation.target);
     if (relation.relation === "manifests") source.manifestations.push(relation.target);
+    if (relation.relation === "defines") source.data[`defines:${relation.target}`] = true;
   }
-  return { schema: "hnk-hom/v0.1", graph_ref: graph.graph_id, objects };
+  return { schema: "hnk-hom/v0.1", graph_ref: graph.graph_id, objects, relations };
 }

@@ -27,3 +27,4 @@ export * from "./ConcreteRuntimeIntegration";
 export * from "./LiveRuntimeHarness";
 export * from "./BrowserRuntimeProof";
 export * from "./VisualRuntimeEvidence";
+export * from "./RuntimeEvidencePackage";

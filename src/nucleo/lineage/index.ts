@@ -15,3 +15,4 @@ export * from "./EnvironmentPolicyRegistry";
 export * from "./PolicyAwareIntegration";
 export * from "./GovernanceSnapshot";
 export * from "./GovernanceLedger";
+export * from "./UnifiedTrustProof";

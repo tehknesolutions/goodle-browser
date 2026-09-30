@@ -9,3 +9,4 @@ export * from "./Inspector";
 export * from "./Connection";
 export * from "./Canvas";
 export * from "./GoodleMark";
+export * from "./SemanticIcon";

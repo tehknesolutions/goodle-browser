@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
 import type { MaterializedArtifactTree, MaterializedFile } from "../manifestacao/ArtifactMaterializer";
+import {
+  isSafeWorkspacePath,
+  joinSafeWorkspacePath,
+} from "../manifestacao/PathSecurity";
 import type { BuildAttestationV1 } from "./BuildAttestation";
 import { verifyBuildAttestation } from "./BuildAttestation";
 import { sha256Json } from "./BuildLedger";
@@ -27,13 +31,8 @@ function sha256Text(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
-function normalizeRoot(root: string): string {
-  return root.replace(/\\/g, "/").replace(/\/+$/, "");
-}
-
 function fullPath(tree: MaterializedArtifactTree, path: string): string {
-  const root = normalizeRoot(tree.root);
-  return root ? `${root}/${path.replace(/^\/+/, "")}` : path.replace(/^\/+/, "");
+  return joinSafeWorkspacePath(tree.root, path);
 }
 
 export function createTrustedArtifactBundle(input: {
@@ -94,13 +93,30 @@ export function verifyTrustedArtifactBundle(bundle: TrustedArtifactBundleV1): {
   attestation_valid: boolean;
   bundle_hash_valid: boolean;
   files_valid: boolean;
+  paths_valid: boolean;
   invalid_files: string[];
+  invalid_paths: string[];
 } {
   const attestation_valid = verifyBuildAttestation(bundle.attestation);
 
   const invalid_files = bundle.files
     .filter((file) => sha256Text(file.content) !== file.sha256)
     .map((file) => file.path);
+
+  const invalid_paths = bundle.files
+    .filter((file) => !isSafeWorkspacePath(file.path))
+    .map((file) => file.path);
+
+  const duplicatePaths = bundle.files
+    .filter(
+      (file, index, files) =>
+        files.findIndex((candidate) => candidate.path === file.path) !== index,
+    )
+    .map((file) => file.path);
+
+  for (const path of duplicatePaths) {
+    if (!invalid_paths.includes(path)) invalid_paths.push(path);
+  }
 
   const {
     bundle_id: _bundleId,
@@ -110,12 +126,19 @@ export function verifyTrustedArtifactBundle(bundle: TrustedArtifactBundleV1): {
 
   const bundle_hash_valid = sha256Json(unsigned) === bundle_hash;
   const files_valid = invalid_files.length === 0;
+  const paths_valid = invalid_paths.length === 0;
 
   return {
-    valid: attestation_valid && bundle_hash_valid && files_valid,
+    valid:
+      attestation_valid &&
+      bundle_hash_valid &&
+      files_valid &&
+      paths_valid,
     attestation_valid,
     bundle_hash_valid,
     files_valid,
+    paths_valid,
     invalid_files,
+    invalid_paths,
   };
 }

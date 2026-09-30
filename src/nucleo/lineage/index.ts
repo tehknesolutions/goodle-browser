@@ -33,3 +33,4 @@ export * from "./PublicationRegistry";
 export * from "./PublicationRevocationRegistry";
 export * from "./PublicationReinstatement";
 export * from "./PublicationLifecycleLedger";
+export * from "./UnifiedDistributionRegistry";

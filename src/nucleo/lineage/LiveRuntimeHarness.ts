@@ -147,6 +147,8 @@ export function runPhaser3BootHarness(
 export function runLiveRuntimeHarness(
   result: TargetExecutionResult,
 ): LiveRuntimeHarnessEvidenceV1 {
+  assertExecuted(result);
+
   if (result.adapter === "react" && result.version.startsWith("19")) {
     return runReact19LiveHarness(result);
   }

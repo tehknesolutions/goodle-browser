@@ -57,7 +57,10 @@ function registrySnapshotAtSequence(
   if (!Number.isInteger(sequence) || sequence < 1 || sequence > registry.entries.length) {
     throw new Error("SIGNED_QUALITY_REGISTRY_SEQUENCE_INVALID");
   }
-  const entries = registry.entries.slice(0, sequence);
+  const entries = registry.entries.slice(0, sequence).map((entry) => ({
+    ...entry,
+    previous_entry_hash: entry.previous_entry_hash,
+  }));
   const head_hash = entries.at(-1)?.entry_hash;
   const registry_hash = sha256Json({
     schema: "goodle.trusted-auditor-key-registry.v1",

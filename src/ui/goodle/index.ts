@@ -8,3 +8,4 @@ export * from "./Sidebar";
 export * from "./Inspector";
 export * from "./Connection";
 export * from "./Canvas";
+export * from "./GoodleMark";

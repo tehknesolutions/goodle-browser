@@ -20,7 +20,9 @@ describe("Goodle Browser runtime flow",()=>{
   const execute=root.root.findAllByType("button").find((b:any)=>String(b.props.children).includes("Executar"));
   act(()=>execute.props.onClick());
   expect(JSON.stringify(root.toJSON())).toContain("Executando");
-  act(()=>vi.runAllTimers());
+  act(() => {
+    vi.runAllTimers();
+  });
   const output=JSON.stringify(root.toJSON());
   expect(output).toContain("Manifestado");
   expect(output).toContain("Crie um jogo de plataforma");

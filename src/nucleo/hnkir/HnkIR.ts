@@ -1,5 +1,5 @@
 import type { AuthorityState } from "../contratos/HnkEcosystemContracts";
-import type { HnkObjectModel } from "../hom/HnkObjectModel";
+import type { HnkObjectModel, HomRelation } from "../hom/HnkObjectModel";
 
 export type HnkIRKind = "WORLD" | "ENTITY" | "PROPERTY" | "EVENT" | "ACTION" | "UNRESOLVED";
 
@@ -12,10 +12,13 @@ export type HnkIRNode = {
   provenance_refs: string[];
 };
 
+export type HnkIRRelation = HomRelation;
+
 export type HnkIRProgram = {
   schema: "hnk-ir/goodle-v0.1";
   hom_ref: string;
   nodes: HnkIRNode[];
+  relations: HnkIRRelation[];
 };
 
 const classify = (semanticId: string): HnkIRKind => {
@@ -48,5 +51,6 @@ export function homToHnkIR(hom: HnkObjectModel): HnkIRProgram {
       },
       provenance_refs: [...object.provenance_refs],
     })),
+    relations: hom.relations.map((relation) => ({ ...relation, provenance_refs: [...relation.provenance_refs] })),
   };
 }

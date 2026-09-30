@@ -11,7 +11,7 @@ const context = {
 };
 
 describe("goodle-hnkir-to-hnk-verse/v0.1", () => {
-  it("maps a Goodle ENTITY to the official CraftEntity command envelope", () => {
+  it("maps a validated registry binding to its declared native command", () => {
     const commands = mapGoodleHnkIrToVerseCommands({
       schema: "hnk-ir/goodle-v0.1",
       hom_ref: "hom-1",
@@ -20,10 +20,10 @@ describe("goodle-hnkir-to-hnk-verse/v0.1", () => {
     }, context);
     expect(commands).toHaveLength(1);
     expect(commands[0]).toMatchObject({ commandType: "CraftEntity", actorId: "agent:goodle", verseId: "VERSE-ZERO-001", worldId: "WORLD-ZERO-MALKUTH-001", targetId: "entity-1", correlationId: "exec-1" });
-    expect(commands[0].payload).toMatchObject({ sourceKind: "ENTITY", semanticId: "estrutura.entidade", sourceRef: "entity-1" });
+    expect(commands[0].payload).toMatchObject({ sourceKind: "ENTITY", semanticId: "estrutura.entidade", sourceRef: "entity-1", mappingVersion: "goodle-hnkir-to-hnk-verse/v0.1" });
   });
 
-  it("refuses kinds without a confirmed native command mapping", () => {
+  it("refuses registry entries that remain unresolved", () => {
     expect(() => mapGoodleHnkIrToVerseCommands({
       schema: "hnk-ir/goodle-v0.1",
       hom_ref: "hom-1",

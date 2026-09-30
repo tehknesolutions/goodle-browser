@@ -18,9 +18,8 @@ export type CompilerResult = {
 };
 
 const semanticKind = (node: GoodleIRNode): SemanticNodeKind => {
-  if (node.dominio === "dados") return "data";
-  if (node.dominio === "comportamento") return "behavior";
-  if (node.dominio === "mundo") return "structure";
+  if (node.familia === "dados") return "data";
+  if (node.familia === "comportamento") return "behavior";
   return "structure";
 };
 
@@ -57,7 +56,7 @@ export function compileOldRewrite(source: string, options?: { intent_ref?: strin
       diagnostics.push({ severity: "error", code: "UNRESOLVED_SEMANTICS", message: `Semântica sem lowering confirmado: ${node.semantica}`, line: Number(node.metadados?.linha) || undefined });
       return;
     }
-    graph = addSemanticNode(graph, { id, semantic_id: sid, kind: semanticKind(node), authority: "VALIDATED", provenance_refs: options?.intent_ref ? [options.intent_ref] : [], attributes: { ...node.dados, source_semantics: node.semantica } });
+    graph = addSemanticNode(graph, { id, semantic_id: sid, kind: semanticKind(node), authority: "VALIDATED", provenance_refs: options?.intent_ref ? [options.intent_ref] : [], attributes: { ...(node.parametros ?? {}), source_semantics: node.semantica } });
     if (parentEvent) graph = addSemanticRelation(graph, { id: `relation-${parentEvent}-${id}`, source: parentEvent, target: id, relation: "triggers", authority: "VALIDATED", provenance_refs: options?.intent_ref ? [options.intent_ref] : [] });
     if (sid === "comportamento.evento") for (const child of node.filhos ?? []) lower(child, id);
   };

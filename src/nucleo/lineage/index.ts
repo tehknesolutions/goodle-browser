@@ -12,3 +12,6 @@ export * from "./ProductionReleaseGate";
 export * from "./ReleaseRollbackEnforcement";
 export * from "./ReleaseRegistry";
 export * from "./EnvironmentPolicyRegistry";
+export * from "./PolicyAwareIntegration";
+export * from "./GovernanceSnapshot";
+export * from "./GovernanceLedger";

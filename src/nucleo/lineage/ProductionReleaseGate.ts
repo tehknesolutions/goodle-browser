@@ -1,5 +1,8 @@
 import type { EnvironmentStateV1 } from "./DeploymentChronicle";
-import { promoteTrustedBuild } from "./PromotionPipeline";
+import {
+  promoteTrustedBuild,
+  type PromotionPolicyV1,
+} from "./PromotionPipeline";
 import type { TrustedArtifactBundleV1 } from "./TrustedArtifactBundle";
 import type { ReleaseManifestV1 } from "./ReleaseManifest";
 import { verifyReleaseManifest } from "./ReleaseManifest";
@@ -29,6 +32,7 @@ export function promoteReleasedBuildToProduction(input: {
   production: ProductionEnvironmentStateV1;
   bundle: TrustedArtifactBundleV1;
   release: ReleaseManifestV1;
+  promotion_policy_override?: PromotionPolicyV1;
 }): {
   production: ProductionEnvironmentStateV1;
   production_release_receipt: ProductionReleaseReceiptV1;
@@ -57,7 +61,7 @@ export function promoteReleasedBuildToProduction(input: {
     source: input.source,
     destination: input.production,
     bundle: input.bundle,
-    policy: input.release.promotion_policy,
+    policy: input.promotion_policy_override ?? input.release.promotion_policy,
   });
 
   const production: ProductionEnvironmentStateV1 = {

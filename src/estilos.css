@@ -88,3 +88,29 @@ button { cursor: pointer; }
 .barra-status { border-width: 1px 0 0; justify-content: flex-start; }
 @media (max-width: 900px) { .grade-estudio { grid-template-columns: 150px 1fr; } .coluna-criacao { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; grid-template-rows: auto; } }
 @media (max-width: 620px) { .cabecalho { align-items: flex-start; } .acoes-cabecalho { flex-wrap: wrap; justify-content: flex-end; } .grade-estudio { display: block; } .projeto nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .palco-previa { min-height: 280px; } .coluna-criacao { display: block; } .barra-status { flex-wrap: wrap; } .goodle-commandbar { border-radius: var(--radius-md); } }
+
+
+.goodle-panel { border:1px solid var(--goodle-border); border-radius:var(--radius-md); background:var(--goodle-surface); }
+.goodle-sidebar { display:flex; flex-direction:column; min-width:0; background:var(--goodle-surface); }
+.goodle-inspector { min-width:0; border-left:1px solid var(--goodle-border); background:var(--goodle-surface); }
+.goodle-inspector__header { padding:12px 14px; font-weight:700; border-bottom:1px solid var(--goodle-border); }
+.goodle-inspector__body { padding:14px; }
+.goodle-node { position:relative; min-width:220px; border:1px solid var(--goodle-border); border-radius:var(--radius-md); background:var(--goodle-surface-raised); box-shadow:var(--shadow-sm); }
+.goodle-node.is-selected { border-color:var(--goodle-intention); box-shadow:var(--shadow-sm),var(--energy-intention); }
+.goodle-node__header { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--goodle-border); }
+.goodle-node__indicator { width:9px; height:9px; flex:none; border-radius:50%; background:var(--goodle-knowledge); }
+.goodle-node--intention .goodle-node__indicator { background:var(--goodle-intention); }
+.goodle-node--action .goodle-node__indicator { background:var(--goodle-action); }
+.goodle-node--manifestation .goodle-node__indicator { background:var(--goodle-manifestation); }
+.goodle-node__header div { display:grid; gap:2px; }
+.goodle-node__header small { color:var(--goodle-text-muted); font-size:11px; }
+.goodle-node__body { padding:12px 14px; color:var(--goodle-text-secondary); }
+.goodle-node__port { position:absolute; width:10px; height:10px; border:2px solid var(--goodle-surface-raised); border-radius:50%; background:var(--goodle-text-muted); }
+.goodle-node__port--in { left:-6px; top:50%; }
+.goodle-node__port--out { right:-6px; top:50%; }
+.goodle-status { display:inline-flex; align-items:center; gap:7px; color:var(--goodle-text-secondary); font-size:12px; }
+.goodle-status i { width:7px; height:7px; border-radius:50%; background:var(--goodle-text-muted); }
+.goodle-status--running i { background:var(--goodle-action); box-shadow:var(--energy-action); }
+.goodle-status--success i { background:var(--state-success); }
+.goodle-status--warning i { background:var(--state-warning); }
+.goodle-status--error i { background:var(--state-error); }

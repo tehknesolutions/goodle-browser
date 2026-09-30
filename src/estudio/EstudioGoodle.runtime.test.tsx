@@ -1,5 +1,10 @@
 import { describe,expect,it,vi } from "vitest";
 import { act,create } from "react-test-renderer";
+
+vi.mock("../runtime/PhaserManifestation", () => ({
+  PhaserManifestation: () => null,
+}));
+
 import { EstudioGoodle } from "./EstudioGoodle";
 
 describe("Goodle Browser runtime flow",()=>{

@@ -12,3 +12,4 @@ export * from "./manifestacao";
 export * from "./artefatos";
 export * from "./lineage";
 export * from "./oldrewrite";
+export * from "./compiler";

@@ -36,3 +36,4 @@ export * from "./PublicationLifecycleLedger";
 export * from "./UnifiedDistributionRegistry";
 export * from "./DistributionAvailabilityGate";
 export * from "./DistributionAccessChronicle";
+export * from "./DistributionUsageAttestation";

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+
 vi.mock("../runtime/PhaserManifestation", () => ({
   PhaserManifestation: () => null,
 }));
@@ -7,14 +8,14 @@ vi.mock("../runtime/PhaserManifestation", () => ({
 import { EstudioGoodle } from "./EstudioGoodle";
 
 describe("EstudioGoodle", () => {
-  it("expõe as áreas principais do shell em PT-BR", () => {
+  it("expõe as áreas principais do shell atual em PT-BR", () => {
     const html = renderToStaticMarkup(<EstudioGoodle />);
 
-    expect(html).toContain("GoodStudio");
+    expect(html).toContain("goodle");
     expect(html).toContain("Projeto");
-    expect(html).toContain("Prévia");
-    expect(html).toContain("OldRewrite");
-    expect(html).toContain("Good — THE AI");
-    expect(html).toContain("GoodRuntime");
+    expect(html).toContain("FunSpace");
+    expect(html).toContain("Crie qualquer coisa...");
+    expect(html).toContain("Goodle Runtime");
+    expect(html).toContain("React + Phaser");
   });
 });

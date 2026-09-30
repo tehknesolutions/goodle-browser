@@ -32,3 +32,4 @@ export * from "./EvidencePackageConsumer";
 export * from "./PublicationRegistry";
 export * from "./PublicationRevocationRegistry";
 export * from "./PublicationReinstatement";
+export * from "./PublicationLifecycleLedger";

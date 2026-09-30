@@ -1,5 +1,6 @@
 import type { IdentityRef } from "../contratos/HnkEcosystemContracts";
 import type { HnkVersePlan, VerseOperation } from "./HnkVerseAdapter";
+import { orderVerseOperationsByDependencies } from "./HnkVerseDependencyGraph";
 
 export type VerseExecutionStatus = "planned" | "accepted" | "rejected" | "executed" | "failed";
 
@@ -31,6 +32,7 @@ const ORDER: Record<VerseOperation["operation"], number> = {
 };
 
 export function orderVerseOperations(plan: HnkVersePlan): VerseOperation[] {
+  if (plan.relations.length > 0) return orderVerseOperationsByDependencies(plan);
   return [...plan.operations].sort((a, b) => ORDER[a.operation] - ORDER[b.operation]);
 }
 
@@ -41,6 +43,11 @@ export function validateVerseExecutionRequest(request: VerseExecutionRequest): s
   if (!request.runtime.canonical_id) errors.push("missing runtime");
   if (request.plan.unresolved.length > 0) errors.push("plan contains unresolved semantics");
   if (request.plan.operations.length === 0) errors.push("plan contains no executable operations");
+  try {
+    orderVerseOperations(request.plan);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : "invalid dependency graph");
+  }
   return errors;
 }
 

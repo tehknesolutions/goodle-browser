@@ -44,7 +44,16 @@ export * from "./SignedExternalTrustAnchor";
 export * from "./TrustedAuditorKeyRegistry";
 export * from "./SignedAnchorRegistryBinding";
 export * from "./EndToEndExternalTrustProof";
-export * from "./TrustProofConsumerGate";
+export {
+  consumeEndToEndExternalTrustProof,
+  assertTrustProofAccepted,
+  STRICT_TRUST_PROOF_CONSUMER_POLICY_V1,
+} from "./TrustProofConsumerGate";
+export type {
+  TrustProofConsumerDecision,
+  TrustProofConsumerPolicyV1 as EndToEndTrustProofConsumerPolicyV1,
+  TrustProofConsumerResultV1 as EndToEndTrustProofConsumerResultV1,
+} from "./TrustProofConsumerGate";
 export * from "./ConsumerDecisionChronicle";
 export * from "./SignedConsumerAuthority";
 export * from "./BilateralTrustClosure";

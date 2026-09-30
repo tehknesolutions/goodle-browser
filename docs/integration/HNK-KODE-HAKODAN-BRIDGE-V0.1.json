@@ -1,0 +1,110 @@
+{
+  "schema": "goodle-hnk-kode-bridge/v0.1",
+  "source": {
+    "repository": "tehknesolutions/HNK-KODE",
+    "ref": "main",
+    "reviewed": "2026-09-29"
+  },
+  "authority": {
+    "root": "CODEX-HNK",
+    "languageDomain": "HNK-KODE",
+    "implementation": "Goodle"
+  },
+  "canonicalHnkLexemes": [
+    {
+      "lexeme": "AHNUVA",
+      "concept": "AMOR",
+      "ptBR": "amor",
+      "en": "love",
+      "glyphId": "HNK-LG-0001"
+    },
+    {
+      "lexeme": "EMANU",
+      "concept": "VERDADE",
+      "ptBR": "verdade",
+      "en": "truth",
+      "glyphId": "HNK-LG-0002"
+    },
+    {
+      "lexeme": "HAYA",
+      "concept": "VIDA",
+      "ptBR": "vida",
+      "en": "life",
+      "glyphId": "HNK-LG-0003"
+    },
+    {
+      "lexeme": "HODERU",
+      "concept": "CAMINHO",
+      "ptBR": "caminho",
+      "en": "way",
+      "glyphId": "HNK-LG-0004"
+    },
+    {
+      "lexeme": "KODAN",
+      "concept": "LOGOS",
+      "ptBR": "logos",
+      "en": "logos",
+      "glyphId": "HNK-LG-0005"
+    }
+  ],
+  "goodleMappings": [
+    {
+      "goodle": "mundo",
+      "semanticId": "WORLD",
+      "family": "estrutura"
+    },
+    {
+      "goodle": "entidade",
+      "semanticId": "ENTITY",
+      "family": "estrutura"
+    },
+    {
+      "goodle": "propriedade",
+      "semanticId": "PROPERTY",
+      "family": "dados"
+    },
+    {
+      "goodle": "evento",
+      "semanticId": "EVENT",
+      "family": "comportamento"
+    },
+    {
+      "goodle": "ação",
+      "semanticId": "ACTION",
+      "family": "comportamento"
+    },
+    {
+      "goodle": "quando",
+      "semanticId": "WHEN",
+      "family": "comportamento"
+    },
+    {
+      "goodle": "intenção",
+      "semanticId": "INTENT",
+      "family": "execucao"
+    },
+    {
+      "goodle": "manifestar",
+      "semanticId": "MANIFEST",
+      "family": "execucao"
+    }
+  ],
+  "rules": {
+    "unknownHnkLexeme": "UNRESOLVED",
+    "discoveryCandidate": "DISCOVERY_NON_CANONICAL",
+    "inventHnkLexeme": false,
+    "geometryCreatesSemantics": false,
+    "targetDefinesSemantics": false
+  },
+  "layers": {
+    "L8": "ALEF_INTENT",
+    "L7": "NARRATIVE",
+    "L6": "VISUAL_GLYPH_BLOCK",
+    "L5": "HNK_KODE",
+    "L4": "OBJECT_COMPONENT_TYPE",
+    "L3": "SYSTEM_LOGIC_RUNTIME",
+    "L2": "HNK_IR",
+    "L1": "BYTECODE_TARGET_IR",
+    "L0": "BINARY_MALKUTH"
+  }
+}

@@ -1,4 +1,4 @@
-export type GoodleStatusTone = "idle" | "running" | "success" | "warning" | "error";
+export type GoodleStatusTone = "idle" | "running" | "success" | "warning" | "error" | "intention" | "knowledge" | "action" | "manifestation";
 
 export interface GoodleStatusProps {
   label: string;

@@ -48,7 +48,7 @@ export type SignedConsumerDecisionV1 = {
   package_id: string;
   decision: ConsumerDecisionReceiptV1["decision"];
   key_id: string;
-  authority_registry_hash: string;
+  authority_registry_snapshot_hash: string;
   authority_registry_sequence: number;
   public_key_fingerprint_sha256: string;
   signed_payload_hash: string;
@@ -73,6 +73,17 @@ function registryHash(
     entries,
     head_hash,
   });
+}
+
+function registrySnapshotHash(
+  registry: ConsumerAuthorityRegistryV1,
+  sequence: number,
+): string {
+  if (sequence < 1 || sequence > registry.entries.length) {
+    throw new Error("CONSUMER_AUTHORITY_SEQUENCE_INVALID");
+  }
+  const entries = registry.entries.slice(0, sequence);
+  return registryHash(entries, entries.at(-1)?.entry_hash);
 }
 
 export function createConsumerAuthorityKey(input: {
@@ -267,7 +278,10 @@ export function createSignedConsumerDecision(input: {
     package_id: input.receipt.package_id,
     decision: input.receipt.decision,
     key_id: input.key.key_id,
-    authority_registry_hash: input.registry.registry_hash,
+    authority_registry_snapshot_hash: registrySnapshotHash(
+      input.registry,
+      input.registry_sequence,
+    ),
     authority_registry_sequence: input.registry_sequence,
     public_key_fingerprint_sha256: input.key.public_key_fingerprint_sha256,
   };
@@ -301,7 +315,13 @@ export function verifySignedConsumerDecision(input: {
 }): boolean {
   if (!verifyConsumerDecisionReceipt(input.receipt)) return false;
   if (!verifyRegistry(input.registry)) return false;
-  if (input.signed.authority_registry_hash !== input.registry.registry_hash) return false;
+  if (
+    input.signed.authority_registry_snapshot_hash !==
+    registrySnapshotHash(
+      input.registry,
+      input.signed.authority_registry_sequence,
+    )
+  ) return false;
   if (stateAt(input.registry, input.key, input.signed.authority_registry_sequence) !== "ACTIVE") return false;
 
   const payload = {
@@ -313,7 +333,10 @@ export function verifySignedConsumerDecision(input: {
     package_id: input.receipt.package_id,
     decision: input.receipt.decision,
     key_id: input.key.key_id,
-    authority_registry_hash: input.registry.registry_hash,
+    authority_registry_snapshot_hash: registrySnapshotHash(
+      input.registry,
+      input.signed.authority_registry_sequence,
+    ),
     authority_registry_sequence: input.signed.authority_registry_sequence,
     public_key_fingerprint_sha256: input.key.public_key_fingerprint_sha256,
   };

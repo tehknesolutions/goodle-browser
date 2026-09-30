@@ -31,3 +31,4 @@ export * from "./RuntimeEvidencePackage";
 export * from "./EvidencePackageConsumer";
 export * from "./PublicationRegistry";
 export * from "./PublicationRevocationRegistry";
+export * from "./PublicationReinstatement";

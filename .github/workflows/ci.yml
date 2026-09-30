@@ -5,7 +5,10 @@ on:
     branches:
       - main
       - feat/oldrewrite-logica
+      - feat/goodle-ir-v1
+      - feat/goodle-behavior-events-v1
   pull_request:
+  workflow_dispatch:
 
 jobs:
   validar:

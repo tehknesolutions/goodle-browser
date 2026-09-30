@@ -19,6 +19,10 @@ export type TrustProofConsumerPolicyV1 = {
   allowed_adapters?: string[];
   allowed_kinds?: Array<TrustedArtifactBundleV1["attestation"]["target"]["kind"]>;
   allowed_operations?: GovernanceSnapshotV1["operation"][];
+  max_files?: number;
+  max_total_bytes?: number;
+  max_single_file_bytes?: number;
+  require_file_provenance?: boolean;
 };
 
 export type TrustProofConsumerResultV1 = {
@@ -29,6 +33,10 @@ export type TrustProofConsumerResultV1 = {
   reasons: string[];
   verification: UnifiedTrustProofVerificationV1;
 };
+
+function byteLength(value: string): number {
+  return new TextEncoder().encode(value).length;
+}
 
 export function consumeUnifiedTrustProof(input: {
   proof: UnifiedTrustProofV1;
@@ -103,6 +111,37 @@ export function consumeUnifiedTrustProof(input: {
     !policy.allowed_operations.includes(input.governance_snapshot.operation)
   ) {
     reasons.push("OPERATION_NOT_ALLOWED");
+  }
+
+  if (
+    policy.max_files !== undefined &&
+    input.bundle.files.length > policy.max_files
+  ) {
+    reasons.push("BUNDLE_FILE_COUNT_LIMIT_EXCEEDED");
+  }
+
+  const fileBytes = input.bundle.files.map((file) => byteLength(file.content));
+  const totalBytes = fileBytes.reduce((sum, value) => sum + value, 0);
+
+  if (
+    policy.max_total_bytes !== undefined &&
+    totalBytes > policy.max_total_bytes
+  ) {
+    reasons.push("BUNDLE_TOTAL_BYTES_LIMIT_EXCEEDED");
+  }
+
+  if (
+    policy.max_single_file_bytes !== undefined &&
+    fileBytes.some((value) => value > policy.max_single_file_bytes!)
+  ) {
+    reasons.push("BUNDLE_SINGLE_FILE_BYTES_LIMIT_EXCEEDED");
+  }
+
+  if (
+    policy.require_file_provenance &&
+    input.bundle.files.some((file) => file.provenance_refs.length === 0)
+  ) {
+    reasons.push("BUNDLE_FILE_PROVENANCE_REQUIRED");
   }
 
   const decision: TrustProofDecision =

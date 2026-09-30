@@ -1,0 +1,2 @@
+import type{CombatState}from"./CombatRules";
+export function restoreCombatState(base:CombatState,defeatedEnemyIds:string[]):CombatState{const enemyHp={...base.enemyHp};let defeated=0;for(const id of Object.keys(enemyHp)){if(defeatedEnemyIds.includes(id)){enemyHp[id]=0;defeated++}}return{...base,enemyHp,defeated,completed:base.objective==="defeat-enemies"&&base.total>0&&defeated>=base.total}}

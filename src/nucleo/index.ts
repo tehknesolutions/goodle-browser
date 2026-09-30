@@ -9,4 +9,7 @@ export * from "./semantica";
 export * from "./ir";
 export * from "./grafo";
 export * from "./manifestacao";
+export * from "./artefatos";
+export * from "./lineage";
 export * from "./oldrewrite";
+export * from "./compiler";

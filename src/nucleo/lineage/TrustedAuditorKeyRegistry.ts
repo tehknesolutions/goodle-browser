@@ -48,9 +48,13 @@ function registryHash(
   entries: TrustedAuditorKeyRegistryEntryV1[],
   head_hash?: string,
 ): string {
+  const canonicalEntries = entries.map((entry) => ({
+    ...entry,
+    previous_entry_hash: entry.previous_entry_hash,
+  }));
   return sha256Json({
     schema: "goodle.trusted-auditor-key-registry.v1",
-    entries,
+    entries: canonicalEntries,
     head_hash,
   });
 }
@@ -222,7 +226,11 @@ export function verifyTrustedAuditorKeyRegistry(
     if (entry.previous_entry_hash !== previous) return false;
 
     const { entry_id: _entryId, entry_hash, ...unsigned } = entry;
-    if (sha256Json(unsigned) !== entry_hash) return false;
+    const canonicalUnsigned = {
+      ...unsigned,
+      previous_entry_hash: entry.previous_entry_hash,
+    };
+    if (sha256Json(canonicalUnsigned) !== entry_hash) return false;
 
     previous = entry_hash;
   }

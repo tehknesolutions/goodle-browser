@@ -57,3 +57,4 @@ export type {
 export * from "./ConsumerDecisionChronicle";
 export * from "./SignedConsumerAuthority";
 export * from "./BilateralTrustClosure";
+export * from "./SignedIndependentQualityAttestation";

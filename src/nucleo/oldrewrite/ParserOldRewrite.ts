@@ -71,7 +71,19 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
 }
 
 export function parseOldRewrite(fonte: string): GoodleIRPrograma {
-  const linhas = fonte.split(/\r?\n/).map((texto, indice) => ({ texto, linha: indice + 1, indentada: /^\s+/.test(texto) })).filter(({ texto }) => texto.trim().length > 0);
+  const linhasBrutas = fonte.split(/\r?\n/);
+  const linhasNaoVazias = linhasBrutas
+    .map((texto, indice) => ({ texto, linha: indice + 1 }))
+    .filter(({ texto }) => texto.trim().length > 0);
+  const indentacaoBase = linhasNaoVazias.reduce((minimo, { texto }) => {
+    const largura = texto.match(/^\s*/)?.[0].length ?? 0;
+    return Math.min(minimo, largura);
+  }, Number.POSITIVE_INFINITY);
+  const base = Number.isFinite(indentacaoBase) ? indentacaoBase : 0;
+  const linhas = linhasNaoVazias.map(({ texto, linha }) => {
+    const largura = texto.match(/^\s*/)?.[0].length ?? 0;
+    return { texto: texto.slice(Math.min(base, largura)), linha, indentada: largura > base };
+  });
   const nos: GoodleIRNode[] = [];
 
   for (let indice = 0; indice < linhas.length; indice += 1) {

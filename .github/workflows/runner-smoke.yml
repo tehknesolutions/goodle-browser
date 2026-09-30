@@ -1,0 +1,18 @@
+name: Goodle Runner Smoke
+
+on:
+  push:
+    branches:
+      - feat/goodle-ir-v1
+      - feat/goodle-behavior-events-v1
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner alive
+        run: |
+          echo "GOODLE_RUNNER_OK=1"
+          node --version
+          npm --version

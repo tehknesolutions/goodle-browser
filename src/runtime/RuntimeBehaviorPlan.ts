@@ -1,0 +1,3 @@
+import type {ManifestationArtifact} from "./ManifestationArtifact";
+export type RuntimeBehaviorPlan={enemyPatrol:boolean;solidObstacles:boolean;cameraFollow:boolean;portalCompletesObjective:boolean;objectiveLabel:string};
+export function createRuntimeBehaviorPlan(a:ManifestationArtifact):RuntimeBehaviorPlan{return{enemyPatrol:a.scene.entities.some(e=>e.kind==="enemy"),solidObstacles:a.scene.entities.some(e=>e.kind==="obstacle"),cameraFollow:a.camera==="follow-player",portalCompletesObjective:a.objective==="reach-portal"&&a.scene.entities.some(e=>e.kind==="portal"),objectiveLabel:a.objective==="reach-portal"?"Objetivo: chegue ao portal":a.objective==="defeat-enemies"?"Objetivo: derrote os inimigos":"Objetivo: explore o mundo"}}

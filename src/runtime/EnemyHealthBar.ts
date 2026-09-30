@@ -1,0 +1,3 @@
+import Phaser from "phaser";
+export type EnemyHealthBar={root:Phaser.GameObjects.Container;set:(hp:number,maxHp:number)=>void;destroy:()=>void};
+export function createEnemyHealthBar(scene:Phaser.Scene,x:number,y:number):EnemyHealthBar{const bg=scene.add.rectangle(0,0,34,5,0x111111,.8),fill=scene.add.rectangle(-16,0,32,3,0x00d084,1).setOrigin(0,.5),root=scene.add.container(x,y-25,[bg,fill]).setDepth(18);return{root,set:(hp,maxHp)=>{const ratio=Math.max(0,Math.min(1,hp/Math.max(1,maxHp)));fill.width=32*ratio;fill.setFillStyle(ratio>.5?0x00d084:ratio>.25?0xf4c430:0xd32f2f)},destroy:()=>root.destroy(true)}}

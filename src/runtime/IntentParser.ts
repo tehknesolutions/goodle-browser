@@ -1,0 +1,5 @@
+import type {ExperienceKind} from "./ManifestationArtifact";
+export type CreationObjective="explore"|"reach-portal"|"defeat-enemies";
+export type ParsedCreationIntent={raw:string;experience:ExperienceKind;entities:{enemies:number;obstacles:number};objective:CreationObjective;camera:"follow-player"|"fixed"};
+const countBefore=(q:string,word:RegExp,fallback:number)=>{const m=q.match(new RegExp(`(\\d+)\\s*(?:${word.source})`,`i`));return m?Math.min(20,Number(m[1])):word.test(q)?fallback:0};
+export function parseCreationIntent(raw:string):ParsedCreationIntent{const q=raw.toLowerCase();const experience:ExperienceKind=/top[- ]?down|rpg|aventura/.test(q)?"top-down":/plataforma|platformer|pular|jump/.test(q)?"platformer":"sandbox";const enemies=countBefore(q,/inimigos?|enemies?|monstros?|advers[aá]rios?/,1);const obstacles=countBefore(q,/obst[aá]culos?|barreiras?/,1);const objective:CreationObjective=/portal/.test(q)&&/(chegar|alcancar|alcançar|reach)/.test(q)?"reach-portal":enemies>0&&/(derrot|vencer|defeat)/.test(q)?"defeat-enemies":"explore";return{raw,experience,entities:{enemies,obstacles},objective,camera:"follow-player"}}

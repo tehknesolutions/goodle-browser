@@ -46,3 +46,5 @@ export * from "./SignedAnchorRegistryBinding";
 export * from "./EndToEndExternalTrustProof";
 export * from "./TrustProofConsumerGate";
 export * from "./ConsumerDecisionChronicle";
+export * from "./SignedConsumerAuthority";
+export * from "./BilateralTrustClosure";

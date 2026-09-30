@@ -3,7 +3,10 @@ name: Diagnóstico Runner Goodle
 on:
   push:
     branches:
-      - feat/semantic-dictionary-v1
+      - main
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
   pull_request:
   workflow_dispatch:
 

@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {createRenderDescriptor} from "./RenderLayer";
+describe("RenderLayer",()=>{it("gives semantic visuals instead of raw rectangles",()=>{const player=createRenderDescriptor("player","forest"),portal=createRenderDescriptor("portal","space");expect(player.shape).toBe("character");expect(player.animated).toBe(true);expect(portal.shape).toBe("portal");expect(portal.emissive).toBe(true)});it("changes decoration by biome",()=>{expect(createRenderDescriptor("object","forest").decoration).toBe("tree");expect(createRenderDescriptor("object","desert").decoration).toBe("rock")})});

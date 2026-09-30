@@ -1,0 +1,3 @@
+import {describe,expect,it} from "vitest";
+import {compileManifestationArtifact} from "./ManifestationArtifact";
+describe("parser -> artifact",()=>{it("materializes requested counts, camera and portal objective",()=>{const a=compileManifestationArtifact("Crie um RPG top-down com 3 inimigos, 2 obstáculos e objetivo de chegar ao portal");expect(a.scene.entities.filter(e=>e.kind==="enemy")).toHaveLength(3);expect(a.scene.entities.filter(e=>e.kind==="obstacle")).toHaveLength(2);expect(a.scene.entities.filter(e=>e.kind==="portal")).toHaveLength(1);expect(a.objective).toBe("reach-portal");expect(a.camera).toBe("follow-player")})});

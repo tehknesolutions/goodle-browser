@@ -16,3 +16,5 @@ export * from "./PolicyAwareIntegration";
 export * from "./GovernanceSnapshot";
 export * from "./GovernanceLedger";
 export * from "./UnifiedTrustProof";
+export * from "./TrustProofConsumer";
+export * from "./SecureArtifactIntake";

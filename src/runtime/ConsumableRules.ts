@@ -1,0 +1,3 @@
+import{consumeLoot,hasLoot,type InventoryState}from"./LootInventory";
+export type ConsumableResult={ok:boolean;inventory:InventoryState;hp:number;reason?:"not-owned"|"unsupported"};
+export function useConsumable(inventory:InventoryState,id:string,hp:number,maxHp:number):ConsumableResult{if(id!=="healing-core")return{ok:false,inventory,hp,reason:"unsupported"};if(!hasLoot(inventory,id))return{ok:false,inventory,hp,reason:"not-owned"};return{ok:true,inventory:consumeLoot(inventory,id),hp:Math.min(maxHp,hp+30)}}

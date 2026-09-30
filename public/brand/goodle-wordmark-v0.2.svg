@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 220" role="img" aria-labelledby="title desc">
+<title id="title">goodle wordmark V0.2</title><desc id="desc">Goodle wordmark with geometric face symbol and lowercase wordmark.</desc>
+<rect width="920" height="220" fill="none"/>
+<g transform="translate(20 20) scale(.3516)">
+<circle cx="256" cy="256" r="220" fill="#080A09" stroke="#B8860B" stroke-width="10"/>
+<path d="M256 42 A214 214 0 0 1 442 150 L256 256Z" fill="#B8860B" stroke="#080A09" stroke-width="10"/>
+<path d="M70 150 A214 214 0 0 1 256 42 L256 256Z" fill="#5C0F19" stroke="#080A09" stroke-width="10"/>
+<path d="M442 150 A214 214 0 0 1 442 362 L256 256Z" fill="#8B1A1A" stroke="#080A09" stroke-width="10"/>
+<path d="M70 362 A214 214 0 0 0 442 362 L256 256Z" fill="#0F3D2E" stroke="#080A09" stroke-width="10"/>
+<circle cx="170" cy="238" r="39" fill="#E8E4DA" stroke="#080A09" stroke-width="10"/>
+<circle cx="342" cy="238" r="39" fill="#E8E4DA" stroke="#080A09" stroke-width="10"/>
+<path d="M218 342 Q256 354 294 342" fill="none" stroke="#080A09" stroke-width="12" stroke-linecap="round"/>
+</g>
+<text x="220" y="128" fill="#F2F0EA" font-family="Inter,Arial,sans-serif" font-size="104" font-weight="800" letter-spacing="-3">goodle</text>
+</svg>

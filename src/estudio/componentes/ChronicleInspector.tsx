@@ -1,4 +1,5 @@
-import type { Chronicle, ChronicleStage } from "../../nucleo/lineage/Chronicle";
+import type { ChronicleStage } from "../../nucleo/lineage/Chronicle";
+import { useChronicleStore } from "../chronicle/ChronicleStore";
 
 const LABELS: Record<ChronicleStage, string> = {
   intent: "Alef / Intent",
@@ -10,7 +11,9 @@ const LABELS: Record<ChronicleStage, string> = {
   artifact: "Artifact",
 };
 
-export function ChronicleInspector({ chronicle }: { chronicle?: Chronicle }) {
+export function ChronicleInspector() {
+  const { selection, clearChronicle } = useChronicleStore();
+  const chronicle = selection?.chronicle;
   if (!chronicle) {
     return (
       <aside className="chronicle-inspector" aria-label="Chronicle Inspector">
@@ -22,15 +25,18 @@ export function ChronicleInspector({ chronicle }: { chronicle?: Chronicle }) {
   return (
     <aside className="chronicle-inspector" aria-label="Chronicle Inspector">
       <header>
-        <strong>Chronicle</strong>
+        <strong>Chronicle · {selection.artifact_id}</strong>
         <span className={chronicle.complete ? "chronicle-ok" : "chronicle-gap"}>
           {chronicle.complete ? "Lineage completo" : `${chronicle.missing.length} gaps`}
         </span>
+        <button type="button" onClick={clearChronicle} aria-label="Fechar Chronicle">×</button>
       </header>
       <ol className="chronicle-flow">
         {[...chronicle.entries].reverse().map((entry) => (
           <li key={`${entry.stage}:${entry.ref}`} data-stage={entry.stage}>
-            <span className="chronicle-node">{LABELS[entry.stage]}</span>
+            <button type="button" className="chronicle-node" data-ref={entry.ref}>
+              {LABELS[entry.stage]}
+            </button>
             <code>{entry.ref}</code>
             {entry.parent_refs.length > 0 && <small>{entry.parent_refs.length} vínculo(s)</small>}
           </li>

@@ -67,10 +67,6 @@ export function createRuntimeEvidencePackage(input: {
   if (!verifyBrowserProofShape(input.browser_runtime_proof)) {
     throw new Error("RUNTIME_EVIDENCE_BROWSER_PROOF_INVALID");
   }
-  if (!verifyVisualShape(input.visual_runtime_evidence)) {
-    throw new Error("RUNTIME_EVIDENCE_VISUAL_INVALID");
-  }
-
   if (
     input.browser_runtime_proof.closed_loop_proof_id !==
       input.closed_loop_proof.proof_id ||
@@ -91,6 +87,10 @@ export function createRuntimeEvidencePackage(input: {
       input.browser_runtime_proof.proof_hash
   ) {
     throw new Error("RUNTIME_EVIDENCE_VISUAL_LINK_MISMATCH");
+  }
+
+  if (!verifyVisualShape(input.visual_runtime_evidence)) {
+    throw new Error("RUNTIME_EVIDENCE_VISUAL_INVALID");
   }
 
   const unsigned = {

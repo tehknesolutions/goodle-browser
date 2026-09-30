@@ -1,0 +1,6 @@
+import{createInventory,type InventoryState}from"./LootInventory";import{buyItem,createDefaultShop,sellItem,type ShopState}from"./ShopRules";import{useConsumable}from"./ConsumableRules";
+export type ShopRuntime={shop:ShopState;inventory:InventoryState;coins:number;hp:number;maxHp:number;message:string};
+export const createShopRuntime=(coins=0,hp=100,maxHp=100):ShopRuntime=>({shop:createDefaultShop(),inventory:createInventory(),coins,hp,maxHp,message:""});
+export function buySelected(s:ShopRuntime,id:string):ShopRuntime{const r=buyItem(s.shop,s.inventory,s.coins,id);return{...s,inventory:r.inventory,coins:r.coins,message:r.ok?`Comprado: ${id}`:r.reason==="insufficient-coins"?"Moedas insuficientes":"Item indisponível"}}
+export function sellSelected(s:ShopRuntime,id:string):ShopRuntime{const r=sellItem(s.shop,s.inventory,s.coins,id);return{...s,inventory:r.inventory,coins:r.coins,message:r.ok?`Vendido: ${id}`:r.reason==="not-owned"?"Você não possui este item":"Item indisponível"}}
+export function useHealingCore(s:ShopRuntime):ShopRuntime{const r=useConsumable(s.inventory,"healing-core",s.hp,s.maxHp);return{...s,inventory:r.inventory,hp:r.hp,message:r.ok?"healing-core usado · +30 HP":"Nenhum healing-core disponível"}}

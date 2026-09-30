@@ -221,7 +221,10 @@ describe("M62 Trust Proof Consumer / Acceptance Gate", () => {
       },
     });
 
-    expect(result.decision).toBe("ACCEPT");
+    expect(result.decision).toBe("REVIEW");
+    expect(result.accepted).toBe(false);
+    expect(result.review_required).toBe(true);
     expect(result.verification.valid).toBe(false);
+    expect(result.reasons).toContain("INVALID_PROOF_REQUIRES_REVIEW");
   });
 });

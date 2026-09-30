@@ -43,15 +43,31 @@ export function consumeEndToEndExternalTrustProof(input: {
   const verification = verifyEndToEndExternalTrustProof(input.proof);
   const reasons = [...verification.reasons];
 
-  if (!verification.valid && policy.reject_on_invalid_proof !== false) {
+  if (!verification.valid) {
+    if (policy.reject_on_invalid_proof !== false) {
+      return {
+        schema: "goodle.trust-proof-consumer-result.v1",
+        proof_id: input.proof.proof_id,
+        package_id: input.proof.package_id,
+        decision: "REJECT",
+        accepted: false,
+        review_required: false,
+        rejected: true,
+        reasons,
+        verification,
+      };
+    }
+
+    reasons.push("INVALID_PROOF_REQUIRES_REVIEW");
+
     return {
       schema: "goodle.trust-proof-consumer-result.v1",
       proof_id: input.proof.proof_id,
       package_id: input.proof.package_id,
-      decision: "REJECT",
+      decision: "REVIEW",
       accepted: false,
-      review_required: false,
-      rejected: true,
+      review_required: true,
+      rejected: false,
       reasons,
       verification,
     };

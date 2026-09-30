@@ -10,3 +10,4 @@ export * from "./PromotionPipeline";
 export * from "./ReleaseManifest";
 export * from "./ProductionReleaseGate";
 export * from "./ReleaseRollbackEnforcement";
+export * from "./ReleaseRegistry";

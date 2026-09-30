@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Previa } from "./componentes/Previa";
 import { EditorIntencao } from "./componentes/EditorIntencao";
 import { PainelComponentes } from "./componentes/PainelComponentes";
-import { ChronicleInspector } from "./componentes/ChronicleInspector";
 import { ChronicleProvider } from "./chronicle/ChronicleStore";
 import { ManifestationRegistryProvider } from "./chronicle/ManifestationRegistry";
 import { createStudioDraft, updateStudioDraft } from "./StudioDraftState";
@@ -17,7 +16,7 @@ export function EstudioGoodle() {
           <header className="cabecalho">
             <div className="marca">
               <strong>goodle</strong>
-              <span>GoodStudio</span>
+              <span>Browser</span>
             </div>
             <GoodleCommandBar placeholder="Crie qualquer coisa..." />
             <div className="acoes-cabecalho">
@@ -26,6 +25,12 @@ export function EstudioGoodle() {
               <span className="avatar">MIG</span>
             </div>
           </header>
+
+          <div className="browser-modebar" role="navigation" aria-label="Espaços do Goodle">
+            <button type="button" className="browser-mode browser-mode--active">GoodStudio</button>
+            <button type="button" className="browser-mode browser-mode--fun">FunSpace</button>
+            <span className="browser-mode-hint">criar · explorar · testar · manifestar</span>
+          </div>
 
           <section className="grade-estudio">
             <PainelComponentes />
@@ -37,8 +42,6 @@ export function EstudioGoodle() {
               onNaturalIntentChange={(naturalIntent) => setDraft((current) => updateStudioDraft(current, { naturalIntent }))}
             />
           </section>
-
-          <ChronicleInspector />
 
           <footer className="barra-status">
             <span>● GoodRuntime</span>

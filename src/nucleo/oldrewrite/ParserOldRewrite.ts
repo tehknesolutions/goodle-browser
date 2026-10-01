@@ -65,6 +65,16 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico(semantica, "mundo", { nome, ...(semantica === "fisica.massa" ? { valor } : { x: valor, y: numero(partes[4] ?? "0") ?? 0 }) }), linha);
   }
 
+  if (comando === "coerencia" || comando === "coherence") {
+    if (["colisao", "colisão", "collision"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.coerencia_colisao", "mundo", {}), linha);
+  }
+  if (comando === "invalidar" || comando === "invalidate") {
+    if (["colisao", "colisão", "collision"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.invalidar_colisao", "mundo", {}), linha);
+  }
+  if (comando === "estado" || comando === "state") {
+    if (["colisao", "colisão", "collision"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.estado_colisao", "mundo", {}), linha);
+  }
+
   if (comando === "cache" || comando === "cachear") {
     if (partes[1]?.toLocaleLowerCase("pt-BR") === "pares" && partes[2]?.toLocaleLowerCase("pt-BR") === "broadphase" && partes.length === 3) return comLinha(criarNoSemantico("fisica.broadphase_pares_cache", "mundo", {}), linha);
   }

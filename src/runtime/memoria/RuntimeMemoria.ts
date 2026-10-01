@@ -4,7 +4,7 @@ import type { ResultadoExecucao, RuntimeGoodle } from "../ContratoRuntimeGoodle"
 export type CenaMemoria = { nome: string };\n\nexport type GeometriaMemoria = { tipo: "ponto" | "circulo" | "retangulo"; raio?: number; largura?: number; altura?: number };\n\nexport type EntidadeMemoria = {
   nome: string;
   tipo: string;
-  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };\n  geometria?: GeometriaMemoria;\n  fisica?: { vx: number; vy: number; ax: number; ay: number; gx: number; gy: number; massa: number; atrito: number; restitucao: number; bloqueado: boolean };
+  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };\n  geometria?: GeometriaMemoria;\n  fisica?: { vx: number; vy: number; ax: number; ay: number; gx: number; gy: number; massa: number; atrito: number; restitucao: number; bloqueado: boolean; dormindo: boolean };
   propriedades?: Record<string, number>;
 };
 export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string; temporizadorId?: string; duracaoMs?: number };
@@ -13,7 +13,7 @@ export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: Evento
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();\n  private repousoFisico = { velocidade: 0.01, forca: 0.01, steps: 3 };\n  private contadorRepouso = new Map<string, number>();
 
   suporta(semantica: string): boolean {
     return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
@@ -43,7 +43,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       const nome = String(no.parametros?.nome ?? "");
       const entidade = this.estadoEntidades.find((item) => item.nome === nome);
       if (!entidade) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "entidade_nao_encontrada", nome } };
-      if (!entidade.fisica) entidade.fisica = { vx: 0, vy: 0, ax: 0, ay: 0, gx: 0, gy: 0, massa: 1, atrito: 0, restitucao: 0, bloqueado: false };
+      if (!entidade.fisica) entidade.fisica = { vx: 0, vy: 0, ax: 0, ay: 0, gx: 0, gy: 0, massa: 1, atrito: 0, restitucao: 0, bloqueado: false, dormindo: false };
       if (no.semantica === "fisica.massa") {
         const massa = Number(no.parametros?.valor);
         if (!(massa > 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "massa_invalida", massa } };
@@ -85,6 +85,25 @@ export class RuntimeMemoria implements RuntimeGoodle {
       } else entidade.fisica.bloqueado = true;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { fisica: { ...entidade.fisica } } };
     }
+    if (no.semantica === "fisica.limiar_repouso") {
+      const valor = Number(no.parametros?.valor);
+      if (!(valor > 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "limiar_invalido", valor } };
+      this.repousoFisico.velocidade = valor;
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ...this.repousoFisico } };
+    }
+    if (no.semantica === "fisica.sleep" || no.semantica === "fisica.acordar") {
+      for (const entidade of this.estadoEntidades) {
+        if (!entidade.fisica) continue;
+        entidade.fisica.dormindo = no.semantica === "fisica.sleep";
+        if (!entidade.fisica.dormindo) this.contadorRepouso.set(entidade.nome, 0);
+      }
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true } };
+    }
+    if (no.semantica === "fisica.estado_repouso") {
+      const estados = this.estadoEntidades.map((e) => ({ nome: e.nome, dormindo: e.fisica?.dormindo ?? false, contador: this.contadorRepouso.get(e.nome) ?? 0 }));
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { estados } };
+    }
+
     if (no.semantica === "fisica.colisao_continua") {
       this.regrasFisicas.ccd = true;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ccd: true } };
@@ -133,6 +152,19 @@ export class RuntimeMemoria implements RuntimeGoodle {
         if (resultado.every((item) => !item.colidiu)) break;
       }
       const regrasFinais = this.executar({ id: `${no.id}:regras-finais`, semantica: "fisica.aplicar_regras", familia: "mundo", parametros: { dt: 0 } });
+      for (const entidade of this.estadoEntidades) {
+        if (!entidade.fisica) continue;
+        const velocidade = Math.sqrt(entidade.fisica.vx ** 2 + entidade.fisica.vy ** 2);
+        const forca = Math.sqrt((entidade.fisica.ax + entidade.fisica.gx) ** 2 + (entidade.fisica.ay + entidade.fisica.gy) ** 2);
+        if (velocidade <= this.repousoFisico.velocidade && forca <= this.repousoFisico.forca) {
+          const count = (this.contadorRepouso.get(entidade.nome) ?? 0) + 1;
+          this.contadorRepouso.set(entidade.nome, count);
+          if (count >= this.repousoFisico.steps) entidade.fisica.dormindo = true;
+        } else {
+          this.contadorRepouso.set(entidade.nome, 0);
+          entidade.fisica.dormindo = false;
+        }
+      }
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, dt, iteracoes: this.regrasFisicas.iteracoes, integracao, regras, colisoes, regrasFinais } };
     }
 
@@ -146,7 +178,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       if (!(dt >= 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "dt_invalido" } };
       const l = this.regrasFisicas.limites;
       for (const entidade of this.estadoEntidades) {
-        if (!entidade.fisica || !entidade.posicao) continue;
+        if (!entidade.fisica || !entidade.posicao || entidade.fisica.dormindo) continue;
         const ph = entidade.fisica;
         if (ph.bloqueado) { ph.vx = 0; ph.vy = 0; continue; }
         if (ph.atrito > 0) {
@@ -169,9 +201,10 @@ export class RuntimeMemoria implements RuntimeGoodle {
 
     if (no.semantica === "fisica.atualizar") {
       const dt = Number(no.parametros?.dt);
+      const dt = Number(no.parametros?.dt);
       if (!(dt >= 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "dt_invalido", dt } };
       for (const entidade of this.estadoEntidades) {
-        if (!entidade.fisica || !entidade.posicao) continue;
+        if (!entidade.fisica || !entidade.posicao || entidade.fisica.dormindo) continue;
         entidade.fisica.vx += (entidade.fisica.ax + entidade.fisica.gx) * dt;
         entidade.fisica.vy += (entidade.fisica.ay + entidade.fisica.gy) * dt;
         entidade.posicao.x += entidade.fisica.vx * dt;

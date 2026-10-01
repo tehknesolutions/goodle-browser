@@ -13,7 +13,7 @@ export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: Evento
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number } = {};
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number } = { iteracoes: 4 };
 
   suporta(semantica: string): boolean {
     return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
@@ -85,6 +85,28 @@ export class RuntimeMemoria implements RuntimeGoodle {
       } else entidade.fisica.bloqueado = true;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { fisica: { ...entidade.fisica } } };
     }
+    if (no.semantica === "fisica.iteracoes") {
+      const valor = Math.floor(Number(no.parametros?.valor));
+      if (!Number.isFinite(valor) || valor < 1 || valor > 32) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "iteracoes_invalidas", valor } };
+      this.regrasFisicas.iteracoes = valor;
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { iteracoes: valor } };
+    }
+
+    if (no.semantica === "fisica.simular") {
+      const dt = Number(no.parametros?.dt);
+      if (!(dt >= 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "dt_invalido", dt } };
+      const integracao = this.executar({ id: `${no.id}:integrar`, semantica: "fisica.atualizar", familia: "mundo", parametros: { dt } });
+      const regras = this.executar({ id: `${no.id}:regras`, semantica: "fisica.aplicar_regras", familia: "mundo", parametros: { dt } });
+      const colisoes: unknown[] = [];
+      for (let i = 0; i < this.regrasFisicas.iteracoes; i++) {
+        const resultado = this.resolverColisoes();
+        colisoes.push(...resultado.filter((item) => item.colidiu));
+        if (resultado.every((item) => !item.colidiu)) break;
+      }
+      const regrasFinais = this.executar({ id: `${no.id}:regras-finais`, semantica: "fisica.aplicar_regras", familia: "mundo", parametros: { dt: 0 } });
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, dt, iteracoes: this.regrasFisicas.iteracoes, integracao, regras, colisoes, regrasFinais } };
+    }
+
     if (no.semantica === "fisica.colisao_resolver") {
       const colisoes = this.resolverColisoes();
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, colisoes } };

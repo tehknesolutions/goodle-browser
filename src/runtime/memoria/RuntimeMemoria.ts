@@ -4,7 +4,7 @@ import type { ResultadoExecucao, RuntimeGoodle } from "../ContratoRuntimeGoodle"
 export type CenaMemoria = { nome: string };\n\nexport type GeometriaMemoria = { tipo: "ponto" | "circulo" | "retangulo"; raio?: number; largura?: number; altura?: number };\n\nexport type EntidadeMemoria = {
   nome: string;
   tipo: string;
-  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };\n  geometria?: GeometriaMemoria;
+  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };\n  geometria?: GeometriaMemoria;\n  fisica?: { vx: number; vy: number; ax: number; ay: number; gx: number; gy: number; massa: number };
   propriedades?: Record<string, number>;
 };
 export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string; temporizadorId?: string; duracaoMs?: number };
@@ -16,7 +16,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -37,6 +37,41 @@ export class RuntimeMemoria implements RuntimeGoodle {
       }
       this.estadoEntidades[indice].ativo = no.semantica === "entidade.ativar";
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, ativo: this.estadoEntidades[indice].ativo, nome } };
+    }
+
+    if (["fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso"].includes(no.semantica)) {
+      const nome = String(no.parametros?.nome ?? "");
+      const entidade = this.estadoEntidades.find((item) => item.nome === nome);
+      if (!entidade) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "entidade_nao_encontrada", nome } };
+      if (!entidade.fisica) entidade.fisica = { vx: 0, vy: 0, ax: 0, ay: 0, gx: 0, gy: 0, massa: 1 };
+      if (no.semantica === "fisica.massa") {
+        const massa = Number(no.parametros?.valor);
+        if (!(massa > 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "massa_invalida", massa } };
+        entidade.fisica.massa = massa;
+      } else if (no.semantica === "fisica.velocidade") {
+        entidade.fisica.vx = Number(no.parametros?.x ?? 0); entidade.fisica.vy = Number(no.parametros?.y ?? 0);
+      } else if (no.semantica === "fisica.aceleracao") {
+        entidade.fisica.ax = Number(no.parametros?.x ?? 0); entidade.fisica.ay = Number(no.parametros?.y ?? 0);
+      } else if (no.semantica === "fisica.gravidade") {
+        entidade.fisica.gx = Number(no.parametros?.x ?? 0); entidade.fisica.gy = Number(no.parametros?.y ?? 0);
+      } else {
+        entidade.fisica.vx += Number(no.parametros?.x ?? 0) / entidade.fisica.massa;
+        entidade.fisica.vy += Number(no.parametros?.y ?? 0) / entidade.fisica.massa;
+      }
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, fisica: { ...entidade.fisica } } };
+    }
+
+    if (no.semantica === "fisica.atualizar") {
+      const dt = Number(no.parametros?.dt);
+      if (!(dt >= 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "dt_invalido", dt } };
+      for (const entidade of this.estadoEntidades) {
+        if (!entidade.fisica || !entidade.posicao) continue;
+        entidade.fisica.vx += (entidade.fisica.ax + entidade.fisica.gx) * dt;
+        entidade.fisica.vy += (entidade.fisica.ay + entidade.fisica.gy) * dt;
+        entidade.posicao.x += entidade.fisica.vx * dt;
+        entidade.posicao.y += entidade.fisica.vy * dt;
+      }
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, dt } };
     }
 
     if (no.semantica === "geometria.ponto" || no.semantica === "geometria.circulo" || no.semantica === "geometria.retangulo") {

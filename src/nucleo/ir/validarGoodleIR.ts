@@ -3,7 +3,7 @@ import type { FamiliaIR, GoodleIRNode, GoodleIRPrograma } from "./GoodleIR";
 
 export type DiagnosticoIR = {
   caminho: string;
-  codigo: "SEMANTICA_DESCONHECIDA" | "FAMILIA_INVALIDA" | "COMPORTAMENTO_SEM_ACAO" | "PARAMETRO_OBRIGATORIO_AUSENTE";
+  codigo: "SEMANTICA_DESCONHECIDA" | "FAMILIA_INVALIDA" | "COMPORTAMENTO_SEM_ACAO" | "PARAMETRO_OBRIGATORIO_AUSENTE" | "OPERADOR_CONDICAO_INVALIDO";
   mensagem: string;
 };
 
@@ -14,6 +14,7 @@ const requisitos: Record<string, string[]> = {
   "comportamento.reacao.quando": ["evento", "fonte", "alvo"],
   "dados.valor.definir": ["entidade", "propriedade", "valor"],
   "dados.valor.diminuir": ["entidade", "propriedade", "valor"],
+  "logica.condicao.se": ["entidade", "propriedade", "operador", "valor"],
 };
 
 function parametroAusente(valor: unknown): boolean {
@@ -39,12 +40,20 @@ function validarNo(no: GoodleIRNode, caminho: string, diagnosticos: DiagnosticoI
     }
   }
 
+  if (no.semantica === "logica.condicao.se" && !["maior_que", "menor_que", "igual"].includes(String(no.parametros?.operador))) {
+    diagnosticos.push({ caminho: `${caminho}.parametros.operador`, codigo: "OPERADOR_CONDICAO_INVALIDO", mensagem: `Operador de condição inválido: ${String(no.parametros?.operador)}` });
+  }
+
   if (no.semantica === "comportamento.reacao.quando" && (!no.filhos || no.filhos.length === 0)) {
     diagnosticos.push({
       caminho: `${caminho}.filhos`,
       codigo: "COMPORTAMENTO_SEM_ACAO",
       mensagem: "Comportamento reativo precisa de pelo menos uma ação filha",
     });
+  }
+
+  if (no.semantica === "logica.condicao.se" && (!no.filhos || no.filhos.length === 0)) {
+    diagnosticos.push({ caminho: `${caminho}.filhos`, codigo: "COMPORTAMENTO_SEM_ACAO", mensagem: "Condição precisa de pelo menos uma ação filha" });
   }
 
   no.filhos?.forEach((filho, indice) => validarNo(filho, `${caminho}.filhos[${indice}]`, diagnosticos));

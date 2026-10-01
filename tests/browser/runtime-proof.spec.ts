@@ -1,0 +1,2 @@
+import{test,expect}from"@playwright/test";
+test("Goodle browser runtime proof boots React and Phaser",async({page})=>{await page.goto("/browser-proof.html");await expect(page.locator('[data-goodle-browser-proof="react"]')).toHaveText("Goodle React Browser Runtime Proof");await expect.poll(async()=>await page.evaluate(()=>window.__GOODLE_BROWSER_PROOF__?.phaser.booted)).toBe(true);await expect(page.locator("#goodle-phaser-root canvas")).toHaveCount(1);});

@@ -13,7 +13,7 @@ on:
 jobs:
   conformidade:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -24,10 +24,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Instalar dependências
+      - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Testes
+      - name: Unit tests
         run: npm test
 
       - name: Typecheck
@@ -35,3 +35,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Browser runtime proof
+        run: npx playwright install --with-deps chromium && npm run test:browser

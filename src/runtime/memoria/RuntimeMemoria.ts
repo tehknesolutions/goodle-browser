@@ -17,6 +17,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private broadphaseGrade = new Map<string, Set<string>>();
   private broadphaseProxyCells = new Map<string, Set<string>>();
   private broadphaseProxyAabbs = new Map<string, string>();
+  private broadphaseParesCache = new Map<string, { assinatura: string; pares: Array<{ sujeito: string; objeto: string }> }>();
   private broadphaseTamanhoCelula = 4;
 
   suporta(semantica: string): boolean {
@@ -108,6 +109,15 @@ export class RuntimeMemoria implements RuntimeGoodle {
     if (no.semantica === "fisica.broadphase" || no.semantica === "fisica.particao_espacial" || no.semantica === "fisica.candidatos_colisao") {
       const candidatos = this.candidatosColisao();
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, celula: 4, deterministico: true } };
+    }
+
+    if (no.semantica === "fisica.broadphase_pares_cache" || no.semantica === "fisica.broadphase_pares_atualizar") {
+      const pares=this.atualizarCacheParesBroadphase();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { pares, cacheHit: this.broadphaseParesCache.get("global")?.assinatura === this.assinaturaBroadphasePares() } };
+    }
+    if (no.semantica === "fisica.broadphase_pares_estado") {
+      const cache=this.broadphaseParesCache.get("global");
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { presente: !!cache, assinatura: cache?.assinatura ?? null, pares: cache?.pares ?? [] } };
     }
 
     if (no.semantica === "fisica.broadphase_atualizar") {
@@ -379,6 +389,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
     const novas = new Set(this.celulasAabb(aabb));
     this.broadphaseProxyCells.set(nome, novas);
     this.broadphaseProxyAabbs.set(nome, assinatura);
+    this.broadphaseParesCache.clear();
     for (const cell of novas) {
       const membros=this.broadphaseGrade.get(cell) ?? new Set<string>();
       membros.add(nome); this.broadphaseGrade.set(cell,membros);
@@ -386,7 +397,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   }
 
   private reconstruirBroadphase(): void {
-    this.broadphaseGrade.clear(); this.broadphaseProxyCells.clear(); this.broadphaseProxyAabbs.clear();
+    this.broadphaseGrade.clear(); this.broadphaseProxyCells.clear(); this.broadphaseProxyAabbs.clear(); this.broadphaseParesCache.clear();
     for (const entidade of [...this.estadoEntidades].sort((a,b)=>a.nome.localeCompare(b.nome))) this.atualizarProxyBroadphase(entidade.nome);
   }
 
@@ -411,8 +422,21 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { xMin: entidade.posicao.x, xMax: entidade.posicao.x, yMin: entidade.posicao.y, yMax: entidade.posicao.y };
   }
 
-  candidatosColisao(): Array<{ sujeito: string; objeto: string }> {
+  private assinaturaBroadphasePares(): string {
+    return [...this.broadphaseProxyAabbs.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([nome,aabb])=>nome+"="+aabb).join(";");
+  }
+
+  atualizarCacheParesBroadphase(): Array<{ sujeito: string; objeto: string }> {
     this.garantirBroadphaseAtualizado();
+    const assinatura=this.assinaturaBroadphasePares();
+    const existente=this.broadphaseParesCache.get("global");
+    if (existente?.assinatura===assinatura) return existente.pares;
+    const pares=this.candidatosColisaoSemCache();
+    this.broadphaseParesCache.set("global",{assinatura,pares});
+    return pares;
+  }
+
+  private candidatosColisaoSemCache(): Array<{ sujeito: string; objeto: string }> {
     const nomes = new Map(this.estadoEntidades.map(e=>[e.nome,e]));
     const pares = new Set<string>();
     for (const membros of this.broadphaseGrade.values()) {
@@ -426,6 +450,27 @@ export class RuntimeMemoria implements RuntimeGoodle {
       }
     }
     return [...pares].map(chave=>{const [sujeito,objeto]=chave.split("/");return {sujeito,objeto};}).sort((a,b)=>a.sujeito.localeCompare(b.sujeito)||a.objeto.localeCompare(b.objeto));
+  }
+
+  candidatosColisao(): Array<{ sujeito: string; objeto: string }> {
+    this.garantirBroadphaseAtualizado();
+    const cache = this.broadphaseParesCache.get("global");
+    if (cache?.assinatura === this.assinaturaBroadphasePares()) return cache.pares;
+    const nomes = new Map(this.estadoEntidades.map(e=>[e.nome,e]));
+    const pares = new Set<string>();
+    for (const membros of this.broadphaseGrade.values()) {
+      const ordenada=[...membros].sort((a,b)=>a.localeCompare(b));
+      for(let i=0;i<ordenada.length;i++) for(let j=i+1;j<ordenada.length;j++){
+        const a=nomes.get(ordenada[i]), b=nomes.get(ordenada[j]);
+        if(!a||!b) continue;
+        const aa=this.aabbEntidade(a), bb=this.aabbEntidade(b);
+        if(!aa||!bb) continue;
+        if(aa.xMin<=bb.xMax&&aa.xMax>=bb.xMin&&aa.yMin<=bb.yMax&&aa.yMax>=bb.yMin) pares.add(a.nome+"/"+b.nome);
+      }
+    }
+    const resultado=[...pares].map(chave=>{const [sujeito,objeto]=chave.split("/");return {sujeito,objeto};}).sort((a,b)=>a.sujeito.localeCompare(b.sujeito)||a.objeto.localeCompare(b.objeto));
+    this.broadphaseParesCache.set("global",{assinatura:this.assinaturaBroadphasePares(),pares:resultado});
+    return resultado;
   }
 
   recalcularIlhasFisicas(): Array<{ id: string; membros: string[] }> {

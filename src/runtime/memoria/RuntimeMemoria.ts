@@ -4,7 +4,7 @@ import type { ResultadoExecucao, RuntimeGoodle } from "../ContratoRuntimeGoodle"
 export type CenaMemoria = { nome: string };\n\nexport type EntidadeMemoria = {
   nome: string;
   tipo: string;
-  posicao?: { x: number; y: number };
+  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };
   propriedades?: Record<string, number>;
 };
 export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string; temporizadorId?: string; duracaoMs?: number };
@@ -16,7 +16,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -67,6 +67,18 @@ export class RuntimeMemoria implements RuntimeGoodle {
       if (!entidade.propriedades || entidade.propriedades[propriedade] === undefined) return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "propriedade_nao_encontrada", nome, propriedade } };
       entidade.propriedades[propriedade] -= valor;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, nome, propriedade, valor: entidade.propriedades[propriedade] } };
+    }
+
+    if (no.semantica === "espaco.rotacao" || no.semantica === "espaco.escala") {
+      const nome = String(no.parametros?.nome ?? "");
+      const entidade = this.estadoEntidades.find((item) => item.nome === nome);
+      if (!entidade) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "entidade_nao_encontrada", nome } };
+      if (no.semantica === "espaco.rotacao") {
+        entidade.rotacao = Number(no.parametros?.graus ?? 0);
+        return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, nome, graus: entidade.rotacao } };
+      }
+      entidade.escala = { x: Number(no.parametros?.x ?? 1), y: Number(no.parametros?.y ?? 1) };
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, nome, escala: entidade.escala } };
     }
 
     const x = Number(no.parametros?.x ?? 0); const y = Number(no.parametros?.y ?? 0);

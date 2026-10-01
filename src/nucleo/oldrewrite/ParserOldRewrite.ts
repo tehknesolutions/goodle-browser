@@ -60,6 +60,18 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico("movimento", "mundo", { nome, x, y }), linha);
   }
 
+  if (comando === "rotacionar" || comando === "rotate") {
+    const nome = partes[1]; const conector = partes[2]?.toLocaleLowerCase("pt-BR"); const graus = numero(partes[3]);
+    if (!nome || !["para", "to"].includes(conector) || graus === undefined || partes.length !== 4) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico("rotacao", "mundo", { nome, graus }), linha);
+  }
+
+  if (comando === "escalar" || comando === "scale") {
+    const nome = partes[1]; const conector = partes[2]?.toLocaleLowerCase("pt-BR"); const sx = numero(partes[3]); const sy = numero(partes[4] ?? partes[3]);
+    if (!nome || !["para", "to"].includes(conector) || sx === undefined || sy === undefined || partes.length < 4 || partes.length > 5) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico("escala", "mundo", { nome, x: sx, y: sy }), linha);
+  }
+
   if (comando === "definir" || comando === "set") {
     const propriedade = partes[1];
     const conectorEntidade = partes[2]?.toLocaleLowerCase("pt-BR");

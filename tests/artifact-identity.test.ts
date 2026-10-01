@@ -26,4 +26,14 @@ describe('M75 reproducible artifact identity', () => {
     })
     expect(a).not.toBe(b)
   })
+
+  it('includes normalized paths in the identity', () => {
+    const a = computeArtifactIdentity({ files })
+    const b = computeArtifactIdentity({ files: files.map((file) => file.path === 'index.html' ? { ...file, path: 'pages/index.html' } : file) })
+    expect(a).not.toBe(b)
+  })
+
+  it('returns an explicit SHA-256 identity', () => {
+    expect(computeArtifactIdentity({ files })).toMatch(/^sha256:[a-f0-9]{64}$/)
+  })
 })

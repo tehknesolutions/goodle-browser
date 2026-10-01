@@ -1,15 +1,19 @@
 name: Goodle Runner Smoke
 
 on:
+  pull_request:
   push:
     branches:
-      - feat/goodle-ir-v1
-      - feat/goodle-behavior-events-v1
+      - main
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
   workflow_dispatch:
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
       - name: Runner alive
         run: |

@@ -19,6 +19,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private broadphaseProxyAabbs = new Map<string, string>();
   private broadphaseParesCache = new Map<string, { assinatura: string; pares: Array<{ sujeito: string; objeto: string }> }>();
   private narrowphaseCache = new Map<string, { assinatura: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }>();
+  private manifoldCache = new Map<string, { assinatura: string; sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }>();
   private broadphaseTamanhoCelula = 4;
 
   suporta(semantica: string): boolean {
@@ -110,6 +111,17 @@ export class RuntimeMemoria implements RuntimeGoodle {
     if (no.semantica === "fisica.broadphase" || no.semantica === "fisica.particao_espacial" || no.semantica === "fisica.candidatos_colisao") {
       const candidatos = this.candidatosColisao();
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, celula: 4, deterministico: true } };
+    }
+
+    if (no.semantica === "fisica.manifold_cache" || no.semantica === "fisica.manifold_atualizar") {
+      this.reconciliarManifoldCache();
+      const estado=[...this.manifoldCache.values()].sort((a,b)=>this.chavePar(a.sujeito,a.objeto).localeCompare(this.chavePar(b.sujeito,b.objeto)));
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { manifolds: estado, quantidade: estado.length } };
+    }
+    if (no.semantica === "fisica.manifold_estado") {
+      this.reconciliarManifoldCache();
+      const estado=[...this.manifoldCache.values()].sort((a,b)=>this.chavePar(a.sujeito,a.objeto).localeCompare(this.chavePar(b.sujeito,b.objeto)));
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { manifolds: estado, quantidade: estado.length } };
     }
 
     if (no.semantica === "fisica.coerencia_colisao") {
@@ -436,6 +448,24 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { xMin: entidade.posicao.x, xMax: entidade.posicao.x, yMin: entidade.posicao.y, yMax: entidade.posicao.y };
   }
 
+  private assinaturaManifold(sujeito: string, objeto: string): string {
+    return this.assinaturaPar(sujeito, objeto);
+  }
+
+  private atualizarCacheManifold(resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }>): void {
+    for (const resultado of resultados) {
+      const chave=this.chavePar(resultado.sujeito,resultado.objeto);
+      this.manifoldCache.set(chave,{...resultado,assinatura:this.assinaturaManifold(resultado.sujeito,resultado.objeto)});
+    }
+  }
+
+  private reconciliarManifoldCache(): void {
+    const candidatos=new Set(this.candidatosColisao().map(p=>this.chavePar(p.sujeito,p.objeto)));
+    for (const [chave,manifold] of [...this.manifoldCache.entries()]) {
+      if (!candidatos.has(chave) || this.assinaturaManifold(manifold.sujeito,manifold.objeto)!==manifold.assinatura) this.manifoldCache.delete(chave);
+    }
+  }
+
   private chavePar(sujeito: string, objeto: string): string {
     return [sujeito, objeto].sort((a,b)=>a.localeCompare(b)).join("/");
   }
@@ -452,6 +482,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       return;
     }
     this.narrowphaseCache.clear();
+    this.manifoldCache.clear();
   }
 
   reconciliarCoerenciaColisao(): Array<{ par: string; estado: string }> {
@@ -657,6 +688,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       }
       resultados.push({ sujeito: a.nome, objeto: b.nome, colidiu: true, normal: { x: nx, y: ny }, penetracao: pen });
     }
+    this.atualizarCacheManifold(resultados.filter(item=>item.colidiu));
     return resultados;
   }
 

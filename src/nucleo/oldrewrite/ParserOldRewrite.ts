@@ -48,6 +48,31 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico(semantica, "estrutura", { nome }), linha);
   }
 
+  if (["velocidade", "velocity", "aceleracao", "aceleração", "acceleration", "gravidade", "gravity", "massa", "mass", "impulso", "impulse"].includes(comando)) {
+    const nome = partes[1];
+    const x = numero(partes[3]);
+    const y = numero(partes[4]);
+    const conector = partes[2]?.toLocaleLowerCase("pt-BR");
+    if (!nome) throw new ErroParserOldRewrite(linha, texto.trim());
+    if (["velocidade", "velocity", "aceleracao", "aceleração", "acceleration", "gravidade", "gravity"].includes(comando)) {
+      if (!["para", "to"].includes(conector ?? "") || x === undefined || y === undefined || partes.length !== 5) throw new ErroParserOldRewrite(linha, texto.trim());
+      const semantica = ["velocidade", "velocity"].includes(comando) ? "fisica.velocidade" : ["aceleracao", "aceleração", "acceleration"].includes(comando) ? "fisica.aceleracao" : "fisica.gravidade";
+      return comLinha(criarNoSemantico(semantica, "mundo", { nome, x, y }), linha);
+    }
+    const valor = numero(partes[3]);
+    if (!["para", "to"].includes(conector ?? "") || valor === undefined || partes.length !== 4) throw new ErroParserOldRewrite(linha, texto.trim());
+    const semantica = ["massa", "mass"].includes(comando) ? "fisica.massa" : "fisica.impulso";
+    return comLinha(criarNoSemantico(semantica, "mundo", { nome, ...(semantica === "fisica.massa" ? { valor } : { x: valor, y: numero(partes[4] ?? "0") ?? 0 }) }), linha);
+  }
+
+  if (comando === "atualizar" || comando === "update") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    const dt = numero(partes[2]);
+    if ((tipo === "fisica" || tipo === "physics") && dt !== undefined && partes.length === 3) {
+      return comLinha(criarNoSemantico("fisica.atualizar", "mundo", { dt }), linha);
+    }
+  }
+
   if (comando === "definir" || comando === "define") {
     const forma = partes[1]?.toLocaleLowerCase("pt-BR");
     const preposicao = partes[2]?.toLocaleLowerCase("pt-BR");

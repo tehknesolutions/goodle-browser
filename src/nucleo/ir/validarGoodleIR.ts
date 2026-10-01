@@ -39,6 +39,8 @@ const requisitos: Record<string, string[]> = {
   "fisica.contatos": [],
   "fisica.colisao_continua": [],
   "fisica.resolver_contatos": [],
+  "fisica.contatos_persistentes": [],
+  "fisica.resolver_contatos_persistentes": [],
   "entidade.ativar": ["nome"],
   "entidade.desativar": ["nome"],
   "entidade.spawn": ["nome"],

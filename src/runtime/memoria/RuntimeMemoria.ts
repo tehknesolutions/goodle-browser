@@ -4,7 +4,7 @@ import type { ResultadoExecucao, RuntimeGoodle } from "../ContratoRuntimeGoodle"
 export type CenaMemoria = { nome: string };\n\nexport type GeometriaMemoria = { tipo: "ponto" | "circulo" | "retangulo"; raio?: number; largura?: number; altura?: number };\n\nexport type EntidadeMemoria = {
   nome: string;
   tipo: string;
-  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };\n  geometria?: GeometriaMemoria;\n  fisica?: { vx: number; vy: number; ax: number; ay: number; gx: number; gy: number; massa: number };
+  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };\n  geometria?: GeometriaMemoria;\n  fisica?: { vx: number; vy: number; ax: number; ay: number; gx: number; gy: number; massa: number; atrito: number; restitucao: number; bloqueado: boolean };
   propriedades?: Record<string, number>;
 };
 export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string; temporizadorId?: string; duracaoMs?: number };
@@ -13,10 +13,10 @@ export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: Evento
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number } = {};
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -43,7 +43,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       const nome = String(no.parametros?.nome ?? "");
       const entidade = this.estadoEntidades.find((item) => item.nome === nome);
       if (!entidade) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "entidade_nao_encontrada", nome } };
-      if (!entidade.fisica) entidade.fisica = { vx: 0, vy: 0, ax: 0, ay: 0, gx: 0, gy: 0, massa: 1 };
+      if (!entidade.fisica) entidade.fisica = { vx: 0, vy: 0, ax: 0, ay: 0, gx: 0, gy: 0, massa: 1, atrito: 0, restitucao: 0, bloqueado: false };
       if (no.semantica === "fisica.massa") {
         const massa = Number(no.parametros?.valor);
         if (!(massa > 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "massa_invalida", massa } };
@@ -59,6 +59,56 @@ export class RuntimeMemoria implements RuntimeGoodle {
         entidade.fisica.vy += Number(no.parametros?.y ?? 0) / entidade.fisica.massa;
       }
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, fisica: { ...entidade.fisica } } };
+    }
+
+    if (no.semantica === "fisica.limite") {
+      this.regrasFisicas.limites = { xMin: Number(no.parametros?.xMin), xMax: Number(no.parametros?.xMax), yMin: Number(no.parametros?.yMin), yMax: Number(no.parametros?.yMax) };
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { regras: this.regrasFisicas } };
+    }
+    if (no.semantica === "fisica.superficie") {
+      this.regrasFisicas.superficieY = Number(no.parametros?.y);
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { regras: this.regrasFisicas } };
+    }
+    if (no.semantica === "fisica.atrito" || no.semantica === "fisica.restituicao" || no.semantica === "fisica.bloqueio") {
+      const nome = String(no.parametros?.nome ?? "");
+      const entidade = this.estadoEntidades.find((item) => item.nome === nome);
+      if (!entidade) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "entidade_nao_encontrada", nome } };
+      if (!entidade.fisica) entidade.fisica = { vx: 0, vy: 0, ax: 0, ay: 0, gx: 0, gy: 0, massa: 1, atrito: 0, restitucao: 0, bloqueado: false };
+      if (no.semantica === "fisica.atrito") {
+        const valor = Number(no.parametros?.valor);
+        if (valor < 0) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "atrito_invalido", atrito: valor } };
+        entidade.fisica.atrito = valor;
+      } else if (no.semantica === "fisica.restituicao") {
+        const valor = Number(no.parametros?.valor);
+        if (valor < 0 || valor > 1) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "restituicao_invalida", restitucao: valor } };
+        entidade.fisica.restitucao = valor;
+      } else entidade.fisica.bloqueado = true;
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { fisica: { ...entidade.fisica } } };
+    }
+    if (no.semantica === "fisica.aplicar_regras") {
+      const dt = Number(no.parametros?.dt);
+      if (!(dt >= 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "dt_invalido" } };
+      const l = this.regrasFisicas.limites;
+      for (const entidade of this.estadoEntidades) {
+        if (!entidade.fisica || !entidade.posicao) continue;
+        const ph = entidade.fisica;
+        if (ph.bloqueado) { ph.vx = 0; ph.vy = 0; continue; }
+        if (ph.atrito > 0) {
+          const fator = Math.max(0, 1 - ph.atrito * dt);
+          ph.vx *= fator; ph.vy *= fator;
+        }
+        if (this.regrasFisicas.superficieY !== undefined && entidade.posicao.y < this.regrasFisicas.superficieY) {
+          entidade.posicao.y = this.regrasFisicas.superficieY;
+          if (ph.vy < 0) ph.vy = -ph.vy * ph.restitucao;
+        }
+        if (l) {
+          if (entidade.posicao.x < l.xMin) { entidade.posicao.x = l.xMin; if (ph.vx < 0) ph.vx = -ph.vx * ph.restitucao; }
+          if (entidade.posicao.x > l.xMax) { entidade.posicao.x = l.xMax; if (ph.vx > 0) ph.vx = -ph.vx * ph.restitucao; }
+          if (entidade.posicao.y < l.yMin) { entidade.posicao.y = l.yMin; if (ph.vy < 0) ph.vy = -ph.vy * ph.restitucao; }
+          if (entidade.posicao.y > l.yMax) { entidade.posicao.y = l.yMax; if (ph.vy > 0) ph.vy = -ph.vy * ph.restitucao; }
+        }
+      }
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, dt } };
     }
 
     if (no.semantica === "fisica.atualizar") {

@@ -18,6 +18,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private broadphaseProxyCells = new Map<string, Set<string>>();
   private broadphaseProxyAabbs = new Map<string, string>();
   private broadphaseParesCache = new Map<string, { assinatura: string; pares: Array<{ sujeito: string; objeto: string }> }>();
+  private narrowphaseCache = new Map<string, { assinatura: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }>();
   private broadphaseTamanhoCelula = 4;
 
   suporta(semantica: string): boolean {
@@ -109,6 +110,19 @@ export class RuntimeMemoria implements RuntimeGoodle {
     if (no.semantica === "fisica.broadphase" || no.semantica === "fisica.particao_espacial" || no.semantica === "fisica.candidatos_colisao") {
       const candidatos = this.candidatosColisao();
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, celula: 4, deterministico: true } };
+    }
+
+    if (no.semantica === "fisica.coerencia_colisao") {
+      const estado=this.reconciliarCoerenciaColisao();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { coerente: true, estado } };
+    }
+    if (no.semantica === "fisica.invalidar_colisao") {
+      this.invalidarColisao();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { invalidado: true } };
+    }
+    if (no.semantica === "fisica.estado_colisao") {
+      const estado=this.reconciliarCoerenciaColisao();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { coerente: true, estado, candidatos: this.candidatosColisao() } };
     }
 
     if (no.semantica === "fisica.broadphase_pares_cache" || no.semantica === "fisica.broadphase_pares_atualizar") {
@@ -420,6 +434,32 @@ export class RuntimeMemoria implements RuntimeGoodle {
       return { xMin: entidade.posicao.x - hx, xMax: entidade.posicao.x + hx, yMin: entidade.posicao.y - hy, yMax: entidade.posicao.y + hy };
     }
     return { xMin: entidade.posicao.x, xMax: entidade.posicao.x, yMin: entidade.posicao.y, yMax: entidade.posicao.y };
+  }
+
+  private chavePar(sujeito: string, objeto: string): string {
+    return [sujeito, objeto].sort((a,b)=>a.localeCompare(b)).join("/");
+  }
+
+  private assinaturaPar(sujeito: string, objeto: string): string {
+    const a=this.estadoEntidades.find(e=>e.nome===sujeito), b=this.estadoEntidades.find(e=>e.nome===objeto);
+    const aa=a?this.aabbEntidade(a):undefined, bb=b?this.aabbEntidade(b):undefined;
+    return [this.chavePar(sujeito,objeto), aa ? [aa.xMin,aa.xMax,aa.yMin,aa.yMax].join(",") : "none", bb ? [bb.xMin,bb.xMax,bb.yMin,bb.yMax].join(",") : "none"].join("|");
+  }
+
+  invalidarColisao(sujeito?: string, objeto?: string): void {
+    if (sujeito && objeto) {
+      this.narrowphaseCache.delete(this.chavePar(sujeito,objeto));
+      return;
+    }
+    this.narrowphaseCache.clear();
+  }
+
+  reconciliarCoerenciaColisao(): Array<{ par: string; estado: string }> {
+    this.garantirBroadphaseAtualizado();
+    const candidatos=this.candidatosColisao();
+    const atuais=new Set(candidatos.map(p=>this.chavePar(p.sujeito,p.objeto)));
+    for(const chave of [...this.narrowphaseCache.keys()]) if(!atuais.has(chave)) this.narrowphaseCache.delete(chave);
+    return [...this.narrowphaseCache.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([par,v])=>({par,estado:v.colidiu?"colidiu":"livre"}));
   }
 
   private assinaturaBroadphasePares(): string {

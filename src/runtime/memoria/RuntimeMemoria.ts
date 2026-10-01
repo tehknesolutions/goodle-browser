@@ -19,7 +19,9 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private broadphaseProxyAabbs = new Map<string, string>();
   private broadphaseParesCache = new Map<string, { assinatura: string; pares: Array<{ sujeito: string; objeto: string }> }>();
   private narrowphaseCache = new Map<string, { assinatura: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }>();
-  private manifoldCache = new Map<string, { assinatura: string; sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }>();
+  private manifoldCache = new Map<string, { assinatura: string; sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number; impulsoNormal: number; impulsoTangencial: number }>();
+  private warmStartAtivo = false;
+  private warmStartAplicados = new Set<string>();
   private broadphaseTamanhoCelula = 4;
 
   suporta(semantica: string): boolean {
@@ -111,6 +113,32 @@ export class RuntimeMemoria implements RuntimeGoodle {
     if (no.semantica === "fisica.broadphase" || no.semantica === "fisica.particao_espacial" || no.semantica === "fisica.candidatos_colisao") {
       const candidatos = this.candidatosColisao();
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, celula: 4, deterministico: true } };
+    }
+
+    if (no.semantica === "fisica.warm_start") {
+      this.warmStartAtivo = true;
+      this.warmStartAplicados.clear();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ativo: true } };
+    }
+    if (no.semantica === "fisica.warm_start_aplicar") {
+      this.warmStartAtivo = true;
+      this.warmStartAplicados.clear();
+      const pares=[...this.manifoldCache.values()].sort((a,b)=>this.chavePar(a.sujeito,a.objeto).localeCompare(this.chavePar(b.sujeito,b.objeto)));
+      let aplicados=0;
+      for(const m of pares) {
+        const a=this.estadoEntidades.find(e=>e.nome===m.sujeito), bb=this.estadoEntidades.find(e=>e.nome===m.objeto);
+        if(!a||!bb||!a.fisica||!bb.fisica||!m.colidiu||m.assinatura!==this.assinaturaManifold(m.sujeito,m.objeto)) continue;
+        const invA=a.fisica.bloqueado?0:1/Number(a.fisica.massa??1), invB=bb.fisica.bloqueado?0:1/Number(bb.fisica.massa??1);
+        a.fisica.vx-=(m.impulsoNormal*m.normal.x + m.impulsoTangencial*(-m.normal.y))*invA;
+        a.fisica.vy-=(m.impulsoNormal*m.normal.y + m.impulsoTangencial*(m.normal.x))*invA;
+        bb.fisica.vx+=(m.impulsoNormal*m.normal.x + m.impulsoTangencial*(-m.normal.y))*invB;
+        bb.fisica.vy+=(m.impulsoNormal*m.normal.y + m.impulsoTangencial*(m.normal.x))*invB;
+        this.warmStartAplicados.add(this.chavePar(m.sujeito,m.objeto)); aplicados++;
+      }
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: aplicados, ativo: true } };
+    }
+    if (no.semantica === "fisica.warm_start_estado") {
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ativo: this.warmStartAtivo, aplicados: [...this.warmStartAplicados].sort((a,b)=>a.localeCompare(b)), manifolds: [...this.manifoldCache.values()].filter(m=>m.colidiu).sort((a,b)=>this.chavePar(a.sujeito,a.objeto).localeCompare(this.chavePar(b.sujeito,b.objeto))).map(m=>({par:this.chavePar(m.sujeito,m.objeto),impulsoNormal:m.impulsoNormal,impulsoTangencial:m.impulsoTangencial})) } };
     }
 
     if (no.semantica === "fisica.manifold_cache" || no.semantica === "fisica.manifold_atualizar") {
@@ -452,10 +480,10 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return this.assinaturaPar(sujeito, objeto);
   }
 
-  private atualizarCacheManifold(resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }>): void {
+  private atualizarCacheManifold(resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number; impulsoNormal?: number; impulsoTangencial?: number }>): void {
     for (const resultado of resultados) {
       const chave=this.chavePar(resultado.sujeito,resultado.objeto);
-      this.manifoldCache.set(chave,{...resultado,assinatura:this.assinaturaManifold(resultado.sujeito,resultado.objeto)});
+      this.manifoldCache.set(chave,{...resultado,impulsoNormal:resultado.impulsoNormal ?? 0,impulsoTangencial:resultado.impulsoTangencial ?? 0,assinatura:this.assinaturaManifold(resultado.sujeito,resultado.objeto)});
     }
   }
 
@@ -483,6 +511,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
     }
     this.narrowphaseCache.clear();
     this.manifoldCache.clear();
+    this.warmStartAplicados.clear();
   }
 
   reconciliarCoerenciaColisao(): Array<{ par: string; estado: string }> {
@@ -644,7 +673,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return resultados.sort((a,b) => a.toi-b.toi || a.sujeito.localeCompare(b.sujeito) || a.objeto.localeCompare(b.objeto));
   }
 
-  resolverColisoes(candidatos?: Array<{ sujeito: string; objeto: string }>): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> {
+  resolverColisoes(candidatos?: Array<{ sujeito: string; objeto: string }>): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number; impulsoNormal?: number; impulsoTangencial?: number }> {
     const resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> = [];
     const pares = candidatos ?? this.estadoEntidades.flatMap((a, i) => this.estadoEntidades.slice(i + 1).map(b => ({ sujeito: a.nome, objeto: b.nome })));
     for (const par of pares) {
@@ -669,7 +698,18 @@ export class RuntimeMemoria implements RuntimeGoodle {
       const invA = fa?.bloqueado ? 0 : 1 / Number(fa?.massa ?? 1);
       const invB = fb?.bloqueado ? 0 : 1 / Number(fb?.massa ?? 1);
       const invSum = invA + invB;
+      let impulsoNormalAplicado = 0;
+      let impulsoTangencialAplicado = 0;
       if (invSum > 0) {
+        const chave=this.chavePar(a.nome,b.nome);
+        const anterior=this.manifoldCache.get(chave);
+        if (this.warmStartAtivo && anterior && anterior.colidiu && anterior.assinatura===this.assinaturaManifold(a.nome,b.nome) && !this.warmStartAplicados.has(chave)) {
+          const tx=-ny, ty=nx;
+          const jn=anterior.impulsoNormal, jt=anterior.impulsoTangencial;
+          a.fisica && invA && (a.fisica.vx -= (jn*nx + jt*tx)*invA, a.fisica.vy -= (jn*ny + jt*ty)*invA);
+          b.fisica && invB && (b.fisica.vx += (jn*nx + jt*tx)*invB, b.fisica.vy += (jn*ny + jt*ty)*invB);
+          this.warmStartAplicados.add(chave);
+        }
         a.posicao.x -= nx * pen * (invA / invSum); a.posicao.y -= ny * pen * (invA / invSum);
         b.posicao.x += nx * pen * (invB / invSum); b.posicao.y += ny * pen * (invB / invSum);
         const rvx = (fb?.vx ?? 0) - (fa?.vx ?? 0); const rvy = (fb?.vy ?? 0) - (fa?.vy ?? 0);
@@ -677,16 +717,18 @@ export class RuntimeMemoria implements RuntimeGoodle {
         if (vn < 0) {
           const e = Math.min(fa?.restitucao ?? 0, fb?.restitucao ?? 0);
           const impulse = -(1 + e) * vn / invSum;
+          impulsoNormalAplicado = impulse;
           if (fa && invA) { fa.vx -= impulse * nx * invA; fa.vy -= impulse * ny * invA; }
           if (fb && invB) { fb.vx += impulse * nx * invB; fb.vy += impulse * ny * invB; }
           const tx = -ny, ty = nx; const vt = rvx * tx + rvy * ty;
           const mu = Math.sqrt((fa?.atrito ?? 0) * (fb?.atrito ?? 0));
           const jt = Math.max(-Math.abs(vt) * mu / invSum, Math.min(Math.abs(vt) * mu / invSum, -vt / invSum));
+          impulsoTangencialAplicado = jt;
           if (fa && invA) { fa.vx -= jt * tx * invA; fa.vy -= jt * ty * invA; }
           if (fb && invB) { fb.vx += jt * tx * invB; fb.vy += jt * ty * invB; }
         }
       }
-      resultados.push({ sujeito: a.nome, objeto: b.nome, colidiu: true, normal: { x: nx, y: ny }, penetracao: pen });
+      resultados.push({ sujeito: a.nome, objeto: b.nome, colidiu: true, normal: { x: nx, y: ny }, penetracao: pen, impulsoNormal: impulsoNormalAplicado, impulsoTangencial: impulsoTangencialAplicado });
     }
     this.atualizarCacheManifold(resultados.filter(item=>item.colidiu));
     return resultados;

@@ -48,6 +48,26 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico(semantica, "estrutura", { nome }), linha);
   }
 
+  if (comando === "definir" || comando === "define") {
+    const forma = partes[1]?.toLocaleLowerCase("pt-BR");
+    const preposicao = partes[2]?.toLocaleLowerCase("pt-BR");
+    const nome = partes[3];
+    const detalhe = partes[4]?.toLocaleLowerCase("pt-BR");
+    const a = numero(partes[5]);
+    const b = numero(partes[6] ?? partes[5]);
+    if (forma === "ponto" || forma === "point") {
+      if (!nome || !["de", "of"].includes(preposicao ?? "") || partes.length !== 4) throw new ErroParserOldRewrite(linha, texto.trim());
+      return comLinha(criarNoSemantico("definir ponto", "mundo", { nome }), linha);
+    }
+    if ((forma === "circulo" || forma === "círculo" || forma === "circle") && nome && ["de", "of"].includes(preposicao ?? "") && ["raio", "radius"].includes(detalhe ?? "") && a !== undefined && partes.length === 6) {
+      return comLinha(criarNoSemantico("definir círculo", "mundo", { nome, raio: a }), linha);
+    }
+    if ((forma === "retangulo" || forma === "retângulo" || forma === "rectangle") && nome && ["de", "of"].includes(preposicao ?? "") && a !== undefined && b !== undefined && partes.length === 7) {
+      return comLinha(criarNoSemantico("definir retângulo", "mundo", { nome, largura: a, altura: b }), linha);
+    }
+    throw new ErroParserOldRewrite(linha, texto.trim());
+  }
+
   if (comando === "posicionar" || comando === "position") {
     const nome = partes[1]; const conector = partes[2]?.toLocaleLowerCase("pt-BR"); const x = numero(partes[3]); const y = numero(partes[4]);
     if (!nome || !["em", "at"].includes(conector) || x === undefined || y === undefined || partes.length !== 5) throw new ErroParserOldRewrite(linha, texto.trim());

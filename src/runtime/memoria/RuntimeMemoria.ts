@@ -16,6 +16,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean; broadphase: boolean } = { iteracoes: 4, ccd: false, broadphase: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();\n  private repousoFisico = { velocidade: 0.01, forca: 0.01, steps: 3 };\n  private contadorRepouso = new Map<string, number>();\n  private ilhasFisicas: Array<{ id: string; membros: string[] }> = [];
   private broadphaseGrade = new Map<string, Set<string>>();
   private broadphaseProxyCells = new Map<string, Set<string>>();
+  private broadphaseProxyAabbs = new Map<string, string>();
   private broadphaseTamanhoCelula = 4;
 
   suporta(semantica: string): boolean {
@@ -372,9 +373,12 @@ export class RuntimeMemoria implements RuntimeGoodle {
     }
     const entidade = this.estadoEntidades.find(e=>e.nome===nome);
     const aabb = entidade ? this.aabbEntidade(entidade) : undefined;
-    if (!aabb) { this.broadphaseProxyCells.delete(nome); return; }
+    if (!aabb) { this.broadphaseProxyCells.delete(nome); this.broadphaseProxyAabbs.delete(nome); return; }
+    const assinatura = [aabb.xMin,aabb.xMax,aabb.yMin,aabb.yMax].join("|");
+    if (this.broadphaseProxyAabbs.get(nome) === assinatura && this.broadphaseProxyCells.has(nome)) return;
     const novas = new Set(this.celulasAabb(aabb));
     this.broadphaseProxyCells.set(nome, novas);
+    this.broadphaseProxyAabbs.set(nome, assinatura);
     for (const cell of novas) {
       const membros=this.broadphaseGrade.get(cell) ?? new Set<string>();
       membros.add(nome); this.broadphaseGrade.set(cell,membros);
@@ -382,7 +386,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   }
 
   private reconstruirBroadphase(): void {
-    this.broadphaseGrade.clear(); this.broadphaseProxyCells.clear();
+    this.broadphaseGrade.clear(); this.broadphaseProxyCells.clear(); this.broadphaseProxyAabbs.clear();
     for (const entidade of [...this.estadoEntidades].sort((a,b)=>a.nome.localeCompare(b.nome))) this.atualizarProxyBroadphase(entidade.nome);
   }
 

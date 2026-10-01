@@ -41,16 +41,27 @@ function validarNo(no: GoodleIRNode, caminho: string, diagnosticos: DiagnosticoI
     }
   }
 
-  if (no.semantica === "comportamento.reacao.quando") {\n    const evento = String(no.parametros?.evento ?? "");\n    if (evento === "evento.toque") {\n      for (const parametro of ["fonte", "alvo"]) {\n        if (parametroAusente(no.parametros?.[parametro])) {\n          diagnosticos.push({ caminho: `${caminho}.parametros.${parametro}`, codigo: "PARAMETRO_OBRIGATORIO_AUSENTE", mensagem: `Parâmetro obrigatório ausente: ${parametro}` });\n        }\n      }\n    }\n  }\n\n  if (no.semantica === "logica.condicao.se" && !["maior_que", "menor_que", "igual"].includes(String(no.parametros?.operador))) {
+  if (no.semantica === "comportamento.reacao.quando") {
+    const evento = String(no.parametros?.evento ?? "");
+    if (evento === "evento.toque") {
+      for (const parametro of ["fonte", "alvo"]) {
+        if (parametroAusente(no.parametros?.[parametro])) {
+          diagnosticos.push({
+            caminho: `${caminho}.parametros.${parametro}`,
+            codigo: "PARAMETRO_OBRIGATORIO_AUSENTE",
+            mensagem: `Parâmetro obrigatório ausente: ${parametro}`,
+          });
+        }
+      }
+    }
+  }
+
+  if (no.semantica === "logica.condicao.se" && !["maior_que", "menor_que", "igual"].includes(String(no.parametros?.operador))) {
     diagnosticos.push({ caminho: `${caminho}.parametros.operador`, codigo: "OPERADOR_CONDICAO_INVALIDO", mensagem: `Operador de condição inválido: ${String(no.parametros?.operador)}` });
   }
 
   if (no.semantica === "comportamento.reacao.quando" && (!no.filhos || no.filhos.length === 0)) {
-    diagnosticos.push({
-      caminho: `${caminho}.filhos`,
-      codigo: "COMPORTAMENTO_SEM_ACAO",
-      mensagem: "Comportamento reativo precisa de pelo menos uma ação filha",
-    });
+    diagnosticos.push({ caminho: `${caminho}.filhos`, codigo: "COMPORTAMENTO_SEM_ACAO", mensagem: "Comportamento reativo precisa de pelo menos uma ação filha" });
   }
 
   if (no.semantica === "logica.condicao.se" && (!no.filhos || no.filhos.length === 0)) {

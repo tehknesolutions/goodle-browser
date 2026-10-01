@@ -8,7 +8,7 @@ export type EntidadeMemoria = {
   propriedades?: Record<string, number>;
 };
 export type EventoRuntimeGoodle = { semantica: string; fonte: string; alvo?: string };
-export type EstadoEventoGoodle = "executado" | "evento_desconhecido" | "entidade_nao_encontrada" | "propriedade_nao_encontrada";
+export type EstadoEventoGoodle = "executado" | "evento_desconhecido" | "entidade_nao_encontrada" | "propriedade_nao_encontrada" | "condicao_nao_suportada";
 export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: EventoRuntimeGoodle; acoesExecutadas?: number; detalhe?: string };
 
 export class RuntimeMemoria implements RuntimeGoodle {
@@ -16,7 +16,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "comportamento.reacao.quando"].includes(semantica);
+    return ["entidade.criar", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -28,6 +28,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { nome, tipo } };
     }
     if (no.semantica === "comportamento.reacao.quando") return this.registrar(no);
+    if (no.semantica === "logica.condicao.se") return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: this.avaliarCondicao(no) } };
 
     const nome = String(no.parametros?.nome ?? no.parametros?.entidade ?? "");
     const entidade = this.estadoEntidades.find((item) => item.nome === nome);
@@ -57,6 +58,21 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { estado: "executado", idNo: comportamento.id, semantica: comportamento.semantica, valor: { registrado: true } };
   }
 
+  private avaliarCondicao(no: GoodleIRNode): boolean {
+    const nome = String(no.parametros?.entidade ?? "");
+    const propriedade = String(no.parametros?.propriedade ?? "");
+    const entidade = this.estadoEntidades.find((e) => e.nome === nome);
+    if (!entidade?.propriedades || entidade.propriedades[propriedade] === undefined) return false;
+    const atual = entidade.propriedades[propriedade];
+    const valor = Number(no.parametros?.valor);
+    switch (String(no.parametros?.operador)) {
+      case "maior_que": return atual > valor;
+      case "menor_que": return atual < valor;
+      case "igual": return atual === valor;
+      default: return false;
+    }
+  }
+
   emitir(evento: EventoRuntimeGoodle): ResultadoEventoGoodle {
     if (evento.semantica !== "evento.toque") return { estado: "evento_desconhecido", evento };
     if (!this.estadoEntidades.some((e) => e.nome === evento.fonte) || (evento.alvo && !this.estadoEntidades.some((e) => e.nome === evento.alvo))) return { estado: "entidade_nao_encontrada", evento };
@@ -69,6 +85,20 @@ export class RuntimeMemoria implements RuntimeGoodle {
           const propriedade = String(acao.parametros?.propriedade ?? "");
           if (!entidade) return { estado: "entidade_nao_encontrada", evento, acoesExecutadas };
           if (!entidade.propriedades || entidade.propriedades[propriedade] === undefined) return { estado: "propriedade_nao_encontrada", evento, acoesExecutadas, detalhe: propriedade };
+        }
+        if (acao.semantica === "logica.condicao.se") {
+          const nome = String(acao.parametros?.entidade ?? "");
+          const propriedade = String(acao.parametros?.propriedade ?? "");
+          const entidade = this.estadoEntidades.find((e) => e.nome === nome);
+          if (!entidade) return { estado: "entidade_nao_encontrada", evento, acoesExecutadas };
+          if (!entidade.propriedades || entidade.propriedades[propriedade] === undefined) return { estado: "propriedade_nao_encontrada", evento, acoesExecutadas, detalhe: propriedade };
+          if (!["maior_que", "menor_que", "igual"].includes(String(acao.parametros?.operador))) return { estado: "condicao_nao_suportada", evento, acoesExecutadas, detalhe: String(acao.parametros?.operador) };
+          if (!this.avaliarCondicao(acao)) continue;
+          for (const neta of acao.filhos ?? []) {
+            const resultado = this.executar(neta);
+            if (resultado.estado === "executado") acoesExecutadas += 1;
+          }
+          continue;
         }
         const resultado = this.executar(acao);
         if (resultado.estado === "executado") acoesExecutadas += 1;

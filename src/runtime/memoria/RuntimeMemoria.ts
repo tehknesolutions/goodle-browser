@@ -673,7 +673,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return resultados.sort((a,b) => a.toi-b.toi || a.sujeito.localeCompare(b.sujeito) || a.objeto.localeCompare(b.objeto));
   }
 
-  resolverColisoes(candidatos?: Array<{ sujeito: string; objeto: string }>): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> {
+  resolverColisoes(candidatos?: Array<{ sujeito: string; objeto: string }>): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number; impulsoNormal?: number; impulsoTangencial?: number }> {
     const resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> = [];
     const pares = candidatos ?? this.estadoEntidades.flatMap((a, i) => this.estadoEntidades.slice(i + 1).map(b => ({ sujeito: a.nome, objeto: b.nome })));
     for (const par of pares) {

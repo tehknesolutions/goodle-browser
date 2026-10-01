@@ -11,7 +11,7 @@ const familiasValidas = new Set<FamiliaIR>(["estrutura", "dados", "comportamento
 const semanticasValidas = new Set(DICIONARIO_SEMANTICO_V1.map((item) => item.idCanonico));
 
 const requisitos: Record<string, string[]> = {
-  "comportamento.reacao.quando": ["evento", "fonte", "alvo"],
+  "comportamento.reacao.quando": ["evento"],
   "dados.valor.definir": ["entidade", "propriedade", "valor"],
   "dados.valor.diminuir": ["entidade", "propriedade", "valor"],
   "dados.valor.aumentar": ["entidade", "propriedade", "valor"],

@@ -1,10 +1,10 @@
 import type { GoodleIRNode } from "../../nucleo/ir/GoodleIR";
 import type { ResultadoExecucao, RuntimeGoodle } from "../ContratoRuntimeGoodle";
 
-export type CenaMemoria = { nome: string };\n\nexport type EntidadeMemoria = {
+export type CenaMemoria = { nome: string };\n\nexport type GeometriaMemoria = { tipo: "ponto" | "circulo" | "retangulo"; raio?: number; largura?: number; altura?: number };\n\nexport type EntidadeMemoria = {
   nome: string;
   tipo: string;
-  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };
+  posicao?: { x: number; y: number };\n  rotacao?: number;\n  escala?: { x: number; y: number };\n  geometria?: GeometriaMemoria;
   propriedades?: Record<string, number>;
 };
 export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string; temporizadorId?: string; duracaoMs?: number };
@@ -16,7 +16,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -37,6 +37,16 @@ export class RuntimeMemoria implements RuntimeGoodle {
       }
       this.estadoEntidades[indice].ativo = no.semantica === "entidade.ativar";
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, ativo: this.estadoEntidades[indice].ativo, nome } };
+    }
+
+    if (no.semantica === "geometria.ponto" || no.semantica === "geometria.circulo" || no.semantica === "geometria.retangulo") {
+      const nome = String(no.parametros?.nome ?? "");
+      const entidade = this.estadoEntidades.find((item) => item.nome === nome);
+      if (!entidade) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "entidade_nao_encontrada", nome } };
+      if (no.semantica === "geometria.ponto") entidade.geometria = { tipo: "ponto" };
+      if (no.semantica === "geometria.circulo") entidade.geometria = { tipo: "circulo", raio: Number(no.parametros?.raio) };
+      if (no.semantica === "geometria.retangulo") entidade.geometria = { tipo: "retangulo", largura: Number(no.parametros?.largura), altura: Number(no.parametros?.altura) };
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, nome, geometria: entidade.geometria } };
     }
 
     if (no.semantica === "estrutura.cena") {\n      const nome = String(no.parametros?.nome ?? "");\n      if (!nome) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica };\n      if (!this.cenas.some((cena) => cena.nome === nome)) this.cenas.push({ nome });\n      if (!this.cenaAtual) this.cenaAtual = nome;\n      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { nome, atual: this.cenaAtual === nome } };\n    }\n    if (no.semantica === "cena.transicao") {\n      const destino = String(no.parametros?.destino ?? "");\n      if (!this.cenas.some((cena) => cena.nome === destino)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "cena_nao_encontrada", destino } };\n      const anterior = this.cenaAtual;\n      this.cenaAtual = destino;\n      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, anterior, atual: destino } };\n    }\n\n    if (no.semantica === "entidade.criar") {
@@ -102,10 +112,19 @@ export class RuntimeMemoria implements RuntimeGoodle {
     const dx = sujeito.posicao.x - objeto.posicao.x;
     const dy = sujeito.posicao.y - objeto.posicao.y;
     const distancia = Math.sqrt(dx * dx + dy * dy);
+    const gs = sujeito.geometria;
+    const go = objeto.geometria;
+    if (String(no.parametros?.relacao) === "espaco.colisao" || String(no.parametros?.relacao) === "espaco.sobreposicao") {
+      if (gs?.tipo === "circulo" && go?.tipo === "circulo") return distancia <= Number(gs.raio ?? 0) + Number(go.raio ?? 0);
+      if (gs?.tipo === "retangulo" && go?.tipo === "retangulo") {
+        return Math.abs(dx) <= (Number(gs.largura ?? 0) + Number(go.largura ?? 0)) / 2 && Math.abs(dy) <= (Number(gs.altura ?? 0) + Number(go.altura ?? 0)) / 2;
+      }
+    }
+    if (String(no.parametros?.relacao) === "espaco.dentro" && go?.tipo === "circulo") return distancia <= Number(go.raio ?? 0);
+    if (String(no.parametros?.relacao) === "espaco.dentro" && go?.tipo === "retangulo") return Math.abs(dx) <= Number(go.largura ?? 0) / 2 && Math.abs(dy) <= Number(go.altura ?? 0) / 2;
     switch (String(no.parametros?.relacao)) {
       case "espaco.colisao":
-      case "espaco.sobreposicao":
-      case "espaco.dentro": return distancia <= 1;
+      case "espaco.sobreposicao": return distancia <= 1;
       case "espaco.fora": return distancia > 1;
       case "espaco.perto": return distancia <= 5;
       default: return false;

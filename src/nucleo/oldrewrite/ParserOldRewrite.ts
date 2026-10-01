@@ -41,6 +41,13 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     throw new ErroParserOldRewrite(linha, texto.trim());
   }
 
+  if (["ativar", "activate"].includes(comando) || ["desativar", "deactivate"].includes(comando) || ["spawn", "despawn"].includes(comando)) {
+    const nome = partes.slice(1).join(" ");
+    if (!nome || partes.length < 2) throw new ErroParserOldRewrite(linha, texto.trim());
+    const semantica = comando === "ativar" || comando === "activate" ? "entidade.ativar" : comando === "desativar" || comando === "deactivate" ? "entidade.desativar" : comando === "spawn" ? "entidade.spawn" : "entidade.despawn";
+    return comLinha(criarNoSemantico(semantica, "estrutura", { nome }), linha);
+  }
+
   if (comando === "posicionar" || comando === "position") {
     const nome = partes[1]; const conector = partes[2]?.toLocaleLowerCase("pt-BR"); const x = numero(partes[3]); const y = numero(partes[4]);
     if (!nome || !["em", "at"].includes(conector) || x === undefined || y === undefined || partes.length !== 5) throw new ErroParserOldRewrite(linha, texto.trim());

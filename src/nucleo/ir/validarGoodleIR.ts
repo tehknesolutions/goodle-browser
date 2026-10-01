@@ -34,6 +34,8 @@ const requisitos: Record<string, string[]> = {
   "fisica.bloqueio": ["nome"],
   "fisica.aplicar_regras": ["dt"],
   "fisica.colisao_resolver": [],
+  "fisica.simular": ["dt"],
+  "fisica.iteracoes": ["valor"],
   "entidade.ativar": ["nome"],
   "entidade.desativar": ["nome"],
   "entidade.spawn": ["nome"],

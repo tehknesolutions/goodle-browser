@@ -73,6 +73,34 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     }
   }
 
+  if (comando === "limite" || comando === "bounds") {
+    const xmin = numero(partes[1]); const xmax = numero(partes[2]); const ymin = numero(partes[3]); const ymax = numero(partes[4]);
+    if ([xmin, xmax, ymin, ymax].some((v) => v === undefined) || partes.length !== 5) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico("fisica.limite", "mundo", { xMin: xmin, xMax: xmax, yMin: ymin, yMax: ymax }), linha);
+  }
+  if (comando === "superficie" || comando === "superficie") {
+    const y = numero(partes[1]);
+    if (y === undefined || partes.length !== 2) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico("fisica.superficie", "mundo", { y }), linha);
+  }
+  if (comando === "atrito" || comando === "friction" || comando === "restituicao" || comando === "restituição") {
+    const nome = partes[1]; const valor = numero(partes[3]); const conector = partes[2]?.toLocaleLowerCase("pt-BR");
+    if (!nome || !["para", "to"].includes(conector ?? "") || valor === undefined || partes.length !== 4) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico(comando === "atrito" || comando === "friction" ? "fisica.atrito" : "fisica.restituicao", "mundo", { nome, valor }), linha);
+  }
+  if (comando === "bloqueio" || comando === "block") {
+    const nome = partes[1];
+    if (!nome || partes.length !== 2) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico("fisica.bloqueio", "mundo", { nome }), linha);
+  }
+  if (comando === "aplicar" || comando === "apply") {
+    if (["regras", "rules"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "")) {
+      const dt = numero(partes[2]);
+      if (dt === undefined || partes.length !== 3) throw new ErroParserOldRewrite(linha, texto.trim());
+      return comLinha(criarNoSemantico("fisica.aplicar_regras", "mundo", { dt }), linha);
+    }
+  }
+
   if (comando === "definir" || comando === "define") {
     const forma = partes[1]?.toLocaleLowerCase("pt-BR");
     const preposicao = partes[2]?.toLocaleLowerCase("pt-BR");

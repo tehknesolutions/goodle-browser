@@ -65,7 +65,17 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico(semantica, "mundo", { nome, ...(semantica === "fisica.massa" ? { valor } : { x: valor, y: numero(partes[4] ?? "0") ?? 0 }) }), linha);
   }
 
+  if (comando === "cache" || comando === "cachear") {
+    if (partes[1]?.toLocaleLowerCase("pt-BR") === "pares" && partes[2]?.toLocaleLowerCase("pt-BR") === "broadphase" && partes.length === 3) return comLinha(criarNoSemantico("fisica.broadphase_pares_cache", "mundo", {}), linha);
+  }
   if (comando === "atualizar" || comando === "update") {
+    if (partes[1]?.toLocaleLowerCase("pt-BR") === "pares" && partes[2]?.toLocaleLowerCase("pt-BR") === "broadphase" && partes.length === 3) return comLinha(criarNoSemantico("fisica.broadphase_pares_atualizar", "mundo", {}), linha);
+  }
+  if (comando === "estado" || comando === "state") {
+    if (partes[1]?.toLocaleLowerCase("pt-BR") === "pares" && partes[2]?.toLocaleLowerCase("pt-BR") === "broadphase" && partes.length === 3) return comLinha(criarNoSemantico("fisica.broadphase_pares_estado", "mundo", {}), linha);
+  }
+
+
     const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
     const dt = numero(partes[2]);
     if ((tipo === "fisica" || tipo === "physics") && dt !== undefined && partes.length === 3) {

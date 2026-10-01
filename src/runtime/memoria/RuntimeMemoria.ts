@@ -13,7 +13,7 @@ export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: Evento
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();
 
   suporta(semantica: string): boolean {
     return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
@@ -89,6 +89,14 @@ export class RuntimeMemoria implements RuntimeGoodle {
       this.regrasFisicas.ccd = true;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ccd: true } };
     }
+    if (no.semantica === "fisica.contatos_persistentes") {
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { contatos: this.contatosPersistentes(), cache: [...this.contatosPersistentesCache.entries()] } };
+    }
+    if (no.semantica === "fisica.resolver_contatos_persistentes") {
+      const resolvidos = this.resolverContatosPersistentes();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { resolvidos, cache: [...this.contatosPersistentesCache.entries()] } };
+    }
+
     if (no.semantica === "fisica.contatos") {
       const contatos = this.contatosFisicos();
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { contatos } };
@@ -262,6 +270,48 @@ export class RuntimeMemoria implements RuntimeGoodle {
       case "espaco.perto": return distancia <= 5;
       default: return false;
     }
+  }
+
+  contatosPersistentes(): Array<{ sujeito: string; objeto: string; normal: { x: number; y: number }; penetracao: number; impulsoNormal: number }> {
+    const atuais = this.contatosFisicos();
+    const presentes = new Set<string>();
+    const saida = atuais.map((contato) => {
+      const chave = `${contato.sujeito}/${contato.objeto}`;
+      presentes.add(chave);
+      const anterior = this.contatosPersistentesCache.get(chave);
+      const estado = anterior ?? { impulsoNormal: 0, normal: contato.normal, penetracao: contato.penetracao };
+      estado.normal = contato.normal; estado.penetracao = contato.penetracao;
+      this.contatosPersistentesCache.set(chave, estado);
+      return { sujeito: contato.sujeito, objeto: contato.objeto, normal: contato.normal, penetracao: contato.penetracao, impulsoNormal: estado.impulsoNormal };
+    });
+    for (const chave of [...this.contatosPersistentesCache.keys()]) if (!presentes.has(chave)) this.contatosPersistentesCache.delete(chave);
+    return saida.sort((a,b)=>a.sujeito.localeCompare(b.sujeito)||a.objeto.localeCompare(b.objeto));
+  }
+
+  resolverContatosPersistentes(): Array<{ sujeito: string; objeto: string; impulsoNormal: number }> {
+    const resolvidos: Array<{ sujeito: string; objeto: string; impulsoNormal: number }> = [];
+    for (let iter = 0; iter < this.regrasFisicas.iteracoes; iter++) {
+      const contatos = this.contatosPersistentes();
+      if (!contatos.length) break;
+      let mudou = false;
+      for (const contato of contatos) {
+        const a=this.estadoEntidades.find(e=>e.nome===contato.sujeito), b=this.estadoEntidades.find(e=>e.nome===contato.objeto);
+        if(!a?.fisica||!b?.fisica) continue;
+        const invA=a.fisica.bloqueado?0:1/a.fisica.massa, invB=b.fisica.bloqueado?0:1/b.fisica.massa, inv=invA+invB;
+        if(!inv) continue;
+        const rvx=b.fisica.vx-a.fisica.vx, rvy=b.fisica.vy-a.fisica.vy, vn=rvx*contato.normal.x+rvy*contato.normal.y;
+        if(vn>=0) continue;
+        const chave=`${contato.sujeito}/${contato.objeto}`, e=Math.min(a.fisica.restitucao,b.fisica.restitucao);
+        const delta=-(1+e)*vn/inv, anterior=this.contatosPersistentesCache.get(chave)?.impulsoNormal??0, novo=Math.max(0,anterior+delta), aplicado=novo-anterior;
+        if(aplicado<=0) continue;
+        const cache=this.contatosPersistentesCache.get(chave); if(cache) cache.impulsoNormal=novo;
+        a.fisica.vx-=aplicado*contato.normal.x*invA; a.fisica.vy-=aplicado*contato.normal.y*invA;
+        b.fisica.vx+=aplicado*contato.normal.x*invB; b.fisica.vy+=aplicado*contato.normal.y*invB;
+        resolvidos.push({sujeito:a.nome,objeto:b.nome,impulsoNormal:novo}); mudou=true;
+      }
+      if(!mudou) break;
+    }
+    return resolvidos;
   }
 
   contatosFisicos(): Array<{ sujeito: string; objeto: string; normal: { x: number; y: number }; penetracao: number; pontos: Array<{ x: number; y: number }>; velocidadeRelativa: { x: number; y: number } }> {

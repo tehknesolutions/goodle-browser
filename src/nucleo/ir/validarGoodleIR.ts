@@ -16,6 +16,7 @@ const requisitos: Record<string, string[]> = {
   "dados.valor.diminuir": ["entidade", "propriedade", "valor"],
   "dados.valor.aumentar": ["entidade", "propriedade", "valor"],
   "logica.condicao.se": ["entidade", "propriedade", "operador", "valor"],
+  "evento.temporal": ["duracaoMs"],
 };
 
 function parametroAusente(valor: unknown): boolean {
@@ -38,6 +39,13 @@ function validarNo(no: GoodleIRNode, caminho: string, diagnosticos: DiagnosticoI
         codigo: "PARAMETRO_OBRIGATORIO_AUSENTE",
         mensagem: `Parâmetro obrigatório ausente: ${parametro}`,
       });
+    }
+  }
+
+  if (no.semantica === "comportamento.reacao.quando") {
+    const evento = String(no.parametros?.evento ?? "");
+    if (["evento.temporizador.disparar", "evento.tempo.esperar", "evento.tempo.intervalo"].includes(evento) && parametroAusente(no.parametros?.duracaoMs)) {
+      diagnosticos.push({ caminho: `${caminho}.parametros.duracaoMs`, codigo: "PARAMETRO_OBRIGATORIO_AUSENTE", mensagem: "Duração temporal obrigatória ausente" });
     }
   }
 

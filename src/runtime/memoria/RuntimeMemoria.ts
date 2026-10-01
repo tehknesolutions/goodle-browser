@@ -101,6 +101,11 @@ export class RuntimeMemoria implements RuntimeGoodle {
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ilhas: [...new Set(acordadas)].sort((a,b)=>a.localeCompare(b)) } };
     }
 
+    if (no.semantica === "fisica.broadphase" || no.semantica === "fisica.particao_espacial" || no.semantica === "fisica.candidatos_colisao") {
+      const candidatos = this.candidatosColisao();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, celula: 4, deterministico: true } };
+    }
+
     if (no.semantica === "fisica.limiar_repouso") {
       const valor = Number(no.parametros?.valor);
       if (!(valor > 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "limiar_invalido", valor } };

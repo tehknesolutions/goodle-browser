@@ -16,15 +16,32 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
     if (!this.suporta(no.semantica)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica };
 
+    if (["entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn"].includes(no.semantica)) {
+      const nome = String(no.parametros?.nome ?? "");
+      const indice = this.estadoEntidades.findIndex((item) => item.nome === nome);
+      if (no.semantica === "entidade.spawn") {
+        if (indice >= 0) { this.estadoEntidades[indice].ativo = true; return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, existente: true, nome } }; }
+        this.estadoEntidades.push({ nome, tipo: "entidade", ativo: true });
+        return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, criado: true, nome } };
+      }
+      if (indice < 0) return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "entidade_nao_encontrada", nome } };
+      if (no.semantica === "entidade.despawn") {
+        this.estadoEntidades.splice(indice, 1);
+        return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, removido: true, nome } };
+      }
+      this.estadoEntidades[indice].ativo = no.semantica === "entidade.ativar";
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, ativo: this.estadoEntidades[indice].ativo, nome } };
+    }
+
     if (no.semantica === "estrutura.cena") {\n      const nome = String(no.parametros?.nome ?? "");\n      if (!nome) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica };\n      if (!this.cenas.some((cena) => cena.nome === nome)) this.cenas.push({ nome });\n      if (!this.cenaAtual) this.cenaAtual = nome;\n      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { nome, atual: this.cenaAtual === nome } };\n    }\n    if (no.semantica === "cena.transicao") {\n      const destino = String(no.parametros?.destino ?? "");\n      if (!this.cenas.some((cena) => cena.nome === destino)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "cena_nao_encontrada", destino } };\n      const anterior = this.cenaAtual;\n      this.cenaAtual = destino;\n      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, anterior, atual: destino } };\n    }\n\n    if (no.semantica === "entidade.criar") {
       const nome = String(no.parametros?.nome ?? ""); const tipo = String(no.parametros?.tipo ?? "entidade");
-      this.estadoEntidades.push({ nome, tipo });
+      this.estadoEntidades.push({ nome, tipo, ativo: true });
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { nome, tipo } };
     }
     if (no.semantica === "comportamento.reacao.quando") return this.registrar(no);

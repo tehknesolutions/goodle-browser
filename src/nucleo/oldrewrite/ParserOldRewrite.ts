@@ -102,6 +102,15 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
   }
 
   if (comando === "contatos" || comando === "contacts") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    if (["persistentes", "persistent"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.contatos_persistentes", "mundo", {}), linha);
+  }
+  if (comando === "resolver" || comando === "resolve") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    if (["contatos", "contacts"].includes(tipo ?? "") && ["persistentes", "persistent"].includes(partes[2]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 3) return comLinha(criarNoSemantico("fisica.resolver_contatos_persistentes", "mundo", {}), linha);
+  }
+
+  if (comando === "contatos" || comando === "contacts") {
     if (partes.length === 1) return comLinha(criarNoSemantico("fisica.contatos", "mundo", {}), linha);
   }
   if (comando === "colisao" || comando === "collision") {

@@ -68,7 +68,7 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     const comparador = partes[4]?.toLocaleLowerCase("pt-BR");
     const comparadorSegundo = partes[5]?.toLocaleLowerCase("pt-BR");
     const valor = numero(partes[6]);
-    const operador = comparador === "maior" && comparadorSegundo === "que" ? "maior_que" : comparador === "menor" && comparadorSegundo === "que" ? "menor_que" : comparador === "igual" || comparador === "equals" ? "igual" : undefined;
+    const operador = (comparador === "maior" && comparadorSegundo === "que") || (comparador === "greater" && comparadorSegundo === "than") ? "maior_que" : (comparador === "menor" && comparadorSegundo === "que") || (comparador === "less" && comparadorSegundo === "than") ? "menor_que" : comparador === "igual" || comparador === "equals" ? "igual" : undefined;
     if (!propriedade || !entidade || !["de", "of"].includes(conectorEntidade) || !operador || valor === undefined || partes.length !== 7) throw new ErroParserOldRewrite(linha, texto.trim());
     return comLinha(criarNoSemantico("se", "comportamento", { entidade, propriedade, operador, valor }), linha);
   }

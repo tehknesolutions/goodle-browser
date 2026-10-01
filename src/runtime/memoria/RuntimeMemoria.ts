@@ -13,7 +13,7 @@ export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: Evento
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number } = { iteracoes: 4 };
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };
 
   suporta(semantica: string): boolean {
     return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
@@ -85,11 +85,32 @@ export class RuntimeMemoria implements RuntimeGoodle {
       } else entidade.fisica.bloqueado = true;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { fisica: { ...entidade.fisica } } };
     }
+    if (no.semantica === "fisica.colisao_continua") {
+      this.regrasFisicas.ccd = true;
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ccd: true } };
+    }
+    if (no.semantica === "fisica.contatos") {
+      const contatos = this.contatosFisicos();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { contatos } };
+    }
+    if (no.semantica === "fisica.resolver_contatos") {
+      const contatos = this.contatosFisicos();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { contatos, resolvidos: contatos.length } };
+    }
+
     if (no.semantica === "fisica.iteracoes") {
       const valor = Math.floor(Number(no.parametros?.valor));
       if (!Number.isFinite(valor) || valor < 1 || valor > 32) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "iteracoes_invalidas", valor } };
       this.regrasFisicas.iteracoes = valor;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { iteracoes: valor } };
+    }
+
+    if (no.semantica === "fisica.simular" && this.regrasFisicas.ccd) {
+      const dt = Number(no.parametros?.dt);
+      const ccd = this.colisaoContinua(dt);
+      const base = this.executar({ id: `${no.id}:base`, semantica: "fisica.atualizar", familia: "mundo", parametros: { dt } });
+      const contatos = this.contatosFisicos();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, dt, ccd, contatos, base } };
     }
 
     if (no.semantica === "fisica.simular") {
@@ -241,6 +262,44 @@ export class RuntimeMemoria implements RuntimeGoodle {
       case "espaco.perto": return distancia <= 5;
       default: return false;
     }
+  }
+
+  contatosFisicos(): Array<{ sujeito: string; objeto: string; normal: { x: number; y: number }; penetracao: number; pontos: Array<{ x: number; y: number }>; velocidadeRelativa: { x: number; y: number } }> {
+    const contatos: Array<{ sujeito: string; objeto: string; normal: { x: number; y: number }; penetracao: number; pontos: Array<{ x: number; y: number }>; velocidadeRelativa: { x: number; y: number } }> = [];
+    const pares = this.resolverColisoes().filter((item) => item.colidiu);
+    for (const par of pares) {
+      const a = this.estadoEntidades.find((e) => e.nome === par.sujeito);
+      const b = this.estadoEntidades.find((e) => e.nome === par.objeto);
+      if (!a?.posicao || !b?.posicao) continue;
+      contatos.push({
+        sujeito: par.sujeito, objeto: par.objeto, normal: par.normal, penetracao: par.penetracao,
+        pontos: [{ x: (a.posicao.x + b.posicao.x) / 2, y: (a.posicao.y + b.posicao.y) / 2 }],
+        velocidadeRelativa: { x: (b.fisica?.vx ?? 0) - (a.fisica?.vx ?? 0), y: (b.fisica?.vy ?? 0) - (a.fisica?.vy ?? 0) }
+      });
+    }
+    return contatos.sort((a,b) => a.sujeito.localeCompare(b.sujeito) || a.objeto.localeCompare(b.objeto));
+  }
+
+  colisaoContinua(dt: number): Array<{ sujeito: string; objeto: string; toi: number; normal: { x: number; y: number } }> {
+    const resultados: Array<{ sujeito: string; objeto: string; toi: number; normal: { x: number; y: number } }> = [];
+    for (let i = 0; i < this.estadoEntidades.length; i++) for (let j = i + 1; j < this.estadoEntidades.length; j++) {
+      const a = this.estadoEntidades[i], b = this.estadoEntidades[j];
+      if (!a.posicao || !b.posicao || a.geometria?.tipo !== "circulo" || b.geometria?.tipo !== "circulo") continue;
+      const rvx = (b.fisica?.vx ?? 0) - (a.fisica?.vx ?? 0), rvy = (b.fisica?.vy ?? 0) - (a.fisica?.vy ?? 0);
+      const px = b.posicao.x - a.posicao.x, py = b.posicao.y - a.posicao.y;
+      const radius = Number(a.geometria.raio ?? 0) + Number(b.geometria.raio ?? 0);
+      const aa = rvx*rvx + rvy*rvy, bb = 2*(px*rvx + py*rvy), cc = px*px + py*py - radius*radius;
+      if (cc <= 0) { const n=Math.sqrt(px*px+py*py)||1; resultados.push({ sujeito:a.nome,objeto:b.nome,toi:0,normal:{x:px/n,y:py/n} }); continue; }
+      if (aa === 0) continue;
+      const disc = bb*bb - 4*aa*cc;
+      if (disc < 0) continue;
+      const t = (-bb - Math.sqrt(disc)) / (2*aa);
+      if (t >= 0 && t <= dt) {
+        const cx = px + rvx*t, cy = py + rvy*t, n=Math.sqrt(cx*cx+cy*cy)||1;
+        resultados.push({ sujeito:a.nome,objeto:b.nome,toi:t,normal:{x:cx/n,y:cy/n} });
+      }
+    }
+    return resultados.sort((a,b) => a.toi-b.toi || a.sujeito.localeCompare(b.sujeito) || a.objeto.localeCompare(b.objeto));
   }
 
   resolverColisoes(): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> {

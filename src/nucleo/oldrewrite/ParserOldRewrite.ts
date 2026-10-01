@@ -103,6 +103,23 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
   }
 
   if (comando === "se" || comando === "if") {
+    const sujeitoEspacial = partes[1];
+    const relacaoEspacial = partes[2]?.toLocaleLowerCase("pt-BR");
+    const objetoEspacial = partes[3];
+    const relacoes = new Set(["colidir", "collide", "sobrepor", "overlap", "perto", "near", "dentro", "inside", "fora", "outside"]);
+    if (sujeitoEspacial && objetoEspacial && relacoes.has(relacaoEspacial ?? "")) {
+      const mapa: Record<string, string> = {
+        colidir: "espaco.colisao", collide: "espaco.colisao",
+        sobrepor: "espaco.sobreposicao", overlap: "espaco.sobreposicao",
+        perto: "espaco.perto", near: "espaco.perto",
+        dentro: "espaco.dentro", inside: "espaco.dentro",
+        fora: "espaco.fora", outside: "espaco.fora",
+      };
+      return comLinha(criarNoSemantico("se", "comportamento", { relacao: mapa[relacaoEspacial], sujeito: sujeitoEspacial, objeto: objetoEspacial }), linha);
+    }
+  }
+
+  if (comando === "se" || comando === "if") {
     const propriedade = partes[1];
     const conectorEntidade = partes[2]?.toLocaleLowerCase("pt-BR");
     const entidade = partes[3];

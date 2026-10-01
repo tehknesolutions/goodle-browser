@@ -65,6 +65,12 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico(semantica, "mundo", { nome, ...(semantica === "fisica.massa" ? { valor } : { x: valor, y: numero(partes[4] ?? "0") ?? 0 }) }), linha);
   }
 
+  if (comando === "solver") {
+    if (["estado", "state"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.solver.estado", "mundo", {}), linha);
+    if (["iterar", "iterate"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.solver.iterar", "mundo", {}), linha);
+    if (["aplicar", "apply"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.solver.aplicar", "mundo", {}), linha);
+  }
+
   if (comando === "warm" || comando === "warmstart") {
     if (partes[1]?.toLocaleLowerCase("pt-BR") === "start" && partes.length === 2) return comLinha(criarNoSemantico("fisica.warm_start", "mundo", {}), linha);
   }

@@ -14,6 +14,7 @@ const aliases: AliasSemantico[] = [
   entrada("comportamento.acao", "ação", ["ação", "acao"]), entrada("comportamento.emissao", "emitir", ["emitir", "emit"]),
   entrada("evento.toque", "tocar", ["tocar", "toque", "touch", "touches"]),
   entrada("evento.iniciar", "iniciar", ["iniciar", "start"]), entrada("evento.atualizar", "atualizar", ["atualizar", "update"]),\n  entrada("evento.tecla.pressionar", "pressionar tecla", ["pressionar tecla", "press key"]), entrada("evento.tecla.soltar", "soltar tecla", ["soltar tecla", "release key"]), entrada("evento.clique", "clicar", ["clicar", "click"]),
+  entrada("evento.temporizador.disparar", "temporizador", ["temporizador", "timer", "timeout"]), entrada("evento.tempo.esperar", "esperar", ["esperar", "wait"]), entrada("evento.tempo.intervalo", "intervalo", ["intervalo", "interval", "a_cada"]),
   entrada("dados.valor.definir", "definir", ["definir", "set"]), entrada("dados.valor.diminuir", "diminuir", ["diminuir", "decrease"]),
   entrada("comportamento.funcao", "função", ["função", "funcao"]), entrada("estrutura.entidade", "entidade", ["entidade", "entity"]),
   entrada("estrutura.componente", "componente", ["componente"]), entrada("estrutura.cena", "cena", ["cena"]), entrada("estrutura.mundo", "mundo", ["mundo"]),

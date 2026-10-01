@@ -101,6 +101,12 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     }
   }
 
+  if (comando === "resolver" || comando === "resolve") {
+    if (["colisões", "colisoes", "collisions"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) {
+      return comLinha(criarNoSemantico("fisica.colisao_resolver", "mundo", {}), linha);
+    }
+  }
+
   if (comando === "definir" || comando === "define") {
     const forma = partes[1]?.toLocaleLowerCase("pt-BR");
     const preposicao = partes[2]?.toLocaleLowerCase("pt-BR");

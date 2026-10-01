@@ -65,6 +65,16 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico(semantica, "mundo", { nome, ...(semantica === "fisica.massa" ? { valor } : { x: valor, y: numero(partes[4] ?? "0") ?? 0 }) }), linha);
   }
 
+  if (comando === "warm" || comando === "warmstart") {
+    if (partes[1]?.toLocaleLowerCase("pt-BR") === "start" && partes.length === 2) return comLinha(criarNoSemantico("fisica.warm_start", "mundo", {}), linha);
+  }
+  if (comando === "aplicar" || comando === "apply") {
+    if (partes[1]?.toLocaleLowerCase("pt-BR") === "warm" && partes[2]?.toLocaleLowerCase("pt-BR") === "start" && partes.length === 3) return comLinha(criarNoSemantico("fisica.warm_start_aplicar", "mundo", {}), linha);
+  }
+  if (comando === "estado" || comando === "state") {
+    if (partes[1]?.toLocaleLowerCase("pt-BR") === "warm" && partes[2]?.toLocaleLowerCase("pt-BR") === "start" && partes.length === 3) return comLinha(criarNoSemantico("fisica.warm_start_estado", "mundo", {}), linha);
+  }
+
   if (comando === "manifold") {
     if (["cache"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.manifold_cache", "mundo", {}), linha);
     if (["atualizar", "update"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.manifold_atualizar", "mundo", {}), linha);

@@ -1,28 +1,28 @@
 import type { GoodleIRNode } from "../../nucleo/ir/GoodleIR";
 import type { ResultadoExecucao, RuntimeGoodle } from "../ContratoRuntimeGoodle";
 
-export type EntidadeMemoria = {
+export type CenaMemoria = { nome: string };\n\nexport type EntidadeMemoria = {
   nome: string;
   tipo: string;
   posicao?: { x: number; y: number };
   propriedades?: Record<string, number>;
 };
 export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string; temporizadorId?: string; duracaoMs?: number };
-export type EstadoEventoGoodle = "executado" | "evento_desconhecido" | "entidade_nao_encontrada" | "propriedade_nao_encontrada" | "condicao_nao_suportada";
+export type EstadoEventoGoodle = "executado" | "evento_desconhecido" | "entidade_nao_encontrada" | "propriedade_nao_encontrada" | "condicao_nao_suportada" | "cena_nao_encontrada";
 export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: EventoRuntimeGoodle; acoesExecutadas?: number; detalhe?: string };
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
     if (!this.suporta(no.semantica)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica };
 
-    if (no.semantica === "entidade.criar") {
+    if (no.semantica === "estrutura.cena") {\n      const nome = String(no.parametros?.nome ?? "");\n      if (!nome) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica };\n      if (!this.cenas.some((cena) => cena.nome === nome)) this.cenas.push({ nome });\n      if (!this.cenaAtual) this.cenaAtual = nome;\n      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { nome, atual: this.cenaAtual === nome } };\n    }\n    if (no.semantica === "cena.transicao") {\n      const destino = String(no.parametros?.destino ?? "");\n      if (!this.cenas.some((cena) => cena.nome === destino)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "cena_nao_encontrada", destino } };\n      const anterior = this.cenaAtual;\n      this.cenaAtual = destino;\n      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, anterior, atual: destino } };\n    }\n\n    if (no.semantica === "entidade.criar") {
       const nome = String(no.parametros?.nome ?? ""); const tipo = String(no.parametros?.tipo ?? "entidade");
       this.estadoEntidades.push({ nome, tipo });
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { nome, tipo } };
@@ -124,7 +124,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { estado: "executado", evento, acoesExecutadas };
   }
 
-  entidades(): EntidadeMemoria[] {
+  cenasRegistradas(): CenaMemoria[] {\n    return this.cenas.map((cena) => ({ ...cena }));\n  }\n\n  cenaAtualNome(): string | undefined {\n    return this.cenaAtual;\n  }\n\n  entidades(): EntidadeMemoria[] {
     return this.estadoEntidades.map((entidade) => ({ ...entidade, ...(entidade.posicao ? { posicao: { ...entidade.posicao } } : {}), ...(entidade.propriedades ? { propriedades: { ...entidade.propriedades } } : {}) }));
   }
 }

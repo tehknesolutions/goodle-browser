@@ -12,6 +12,8 @@ const semanticasValidas = new Set(DICIONARIO_SEMANTICO_V1.map((item) => item.idC
 
 const requisitos: Record<string, string[]> = {
   "comportamento.reacao.quando": ["evento"],
+  "estrutura.cena": ["nome"],
+  "cena.transicao": ["destino"],
   "dados.valor.definir": ["entidade", "propriedade", "valor"],
   "dados.valor.diminuir": ["entidade", "propriedade", "valor"],
   "dados.valor.aumentar": ["entidade", "propriedade", "valor"],

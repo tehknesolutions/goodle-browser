@@ -22,11 +22,23 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
   const comando = partes[0]?.toLocaleLowerCase("pt-BR");
 
   if (comando === "criar") {
+    if ((partes[1]?.toLocaleLowerCase("pt-BR") === "cena" || partes[1]?.toLocaleLowerCase("pt-BR") === "scene") && partes.length >= 3) {
+      return comLinha(criarNoSemantico("cena", "estrutura", { nome: partes.slice(2).join(" ") }), linha);
+    }
     const tipoOriginal = partes[1]?.toLocaleLowerCase("pt-BR");
     const nome = partes.slice(2).join(" ");
     const tipo = tipoOriginal === "entity" ? "entidade" : tipoOriginal;
     if (!nome || (tipo !== "entidade" && tipo !== "personagem")) throw new ErroParserOldRewrite(linha, texto.trim());
     return comLinha(criarNoSemantico("criar entidade", "execucao", { tipo, nome }), linha);
+  }
+
+  if (comando === "transicionar" || comando === "transition") {
+    const preposicao = partes[1]?.toLocaleLowerCase("pt-BR");
+    const destino = partes.slice(2).join(" ");
+    if ((preposicao === "para" || preposicao === "to") && destino) {
+      return comLinha(criarNoSemantico("cena.transicao", "estrutura", { destino }), linha);
+    }
+    throw new ErroParserOldRewrite(linha, texto.trim());
   }
 
   if (comando === "posicionar" || comando === "position") {

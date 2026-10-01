@@ -16,7 +16,6 @@ const requisitos: Record<string, string[]> = {
   "dados.valor.diminuir": ["entidade", "propriedade", "valor"],
   "dados.valor.aumentar": ["entidade", "propriedade", "valor"],
   "logica.condicao.se": ["entidade", "propriedade", "operador", "valor"],
-  "evento.temporal": ["duracaoMs"],
 };
 
 function parametroAusente(valor: unknown): boolean {

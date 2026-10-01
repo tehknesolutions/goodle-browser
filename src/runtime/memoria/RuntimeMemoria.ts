@@ -85,6 +85,11 @@ export class RuntimeMemoria implements RuntimeGoodle {
       } else entidade.fisica.bloqueado = true;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { fisica: { ...entidade.fisica } } };
     }
+    if (no.semantica === "fisica.colisao_resolver") {
+      const colisoes = this.resolverColisoes();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, colisoes } };
+    }
+
     if (no.semantica === "fisica.aplicar_regras") {
       const dt = Number(no.parametros?.dt);
       if (!(dt >= 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "dt_invalido" } };
@@ -214,6 +219,51 @@ export class RuntimeMemoria implements RuntimeGoodle {
       case "espaco.perto": return distancia <= 5;
       default: return false;
     }
+  }
+
+  resolverColisoes(): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> {
+    const resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> = [];
+    for (let i = 0; i < this.estadoEntidades.length; i++) for (let j = i + 1; j < this.estadoEntidades.length; j++) {
+      const a = this.estadoEntidades[i]; const b = this.estadoEntidades[j];
+      if (!a.posicao || !b.posicao || !a.geometria || !b.geometria) continue;
+      let nx = b.posicao.x - a.posicao.x; let ny = b.posicao.y - a.posicao.y;
+      const d = Math.sqrt(nx * nx + ny * ny) || 0;
+      let pen = 0;
+      if (a.geometria.tipo === "circulo" && b.geometria.tipo === "circulo") pen = Number(a.geometria.raio ?? 0) + Number(b.geometria.raio ?? 0) - d;
+      else if (a.geometria.tipo === "retangulo" && b.geometria.tipo === "retangulo") {
+        const ox = (Number(a.geometria.largura ?? 0) + Number(b.geometria.largura ?? 0)) / 2 - Math.abs(nx);
+        const oy = (Number(a.geometria.altura ?? 0) + Number(b.geometria.altura ?? 0)) / 2 - Math.abs(ny);
+        pen = Math.min(ox, oy);
+        if (ox < oy) { nx = Math.sign(nx) || 1; ny = 0; } else { nx = 0; ny = Math.sign(ny) || 1; }
+      }
+      if (a.geometria.tipo === "circulo" && b.geometria.tipo === "circulo" && d > 0) { nx /= d; ny /= d; }
+      if (pen <= 0) { resultados.push({ sujeito: a.nome, objeto: b.nome, colidiu: false, normal: { x: nx, y: ny }, penetracao: 0 }); continue; }
+      if (a.geometria.tipo === "circulo" && b.geometria.tipo === "circulo" && d > 0) { /* normal already normalized */ }
+      else { const n = Math.sqrt(nx * nx + ny * ny) || 1; nx /= n; ny /= n; }
+      const fa = a.fisica; const fb = b.fisica;
+      const invA = fa?.bloqueado ? 0 : 1 / Number(fa?.massa ?? 1);
+      const invB = fb?.bloqueado ? 0 : 1 / Number(fb?.massa ?? 1);
+      const invSum = invA + invB;
+      if (invSum > 0) {
+        a.posicao.x -= nx * pen * (invA / invSum); a.posicao.y -= ny * pen * (invA / invSum);
+        b.posicao.x += nx * pen * (invB / invSum); b.posicao.y += ny * pen * (invB / invSum);
+        const rvx = (fb?.vx ?? 0) - (fa?.vx ?? 0); const rvy = (fb?.vy ?? 0) - (fa?.vy ?? 0);
+        const vn = rvx * nx + rvy * ny;
+        if (vn < 0) {
+          const e = Math.min(fa?.restitucao ?? 0, fb?.restitucao ?? 0);
+          const impulse = -(1 + e) * vn / invSum;
+          if (fa && invA) { fa.vx -= impulse * nx * invA; fa.vy -= impulse * ny * invA; }
+          if (fb && invB) { fb.vx += impulse * nx * invB; fb.vy += impulse * ny * invB; }
+          const tx = -ny, ty = nx; const vt = rvx * tx + rvy * ty;
+          const mu = Math.sqrt((fa?.atrito ?? 0) * (fb?.atrito ?? 0));
+          const jt = Math.max(-Math.abs(vt) * mu / invSum, Math.min(Math.abs(vt) * mu / invSum, -vt / invSum));
+          if (fa && invA) { fa.vx -= jt * tx * invA; fa.vy -= jt * ty * invA; }
+          if (fb && invB) { fb.vx += jt * tx * invB; fb.vy += jt * ty * invB; }
+        }
+      }
+      resultados.push({ sujeito: a.nome, objeto: b.nome, colidiu: true, normal: { x: nx, y: ny }, penetracao: pen });
+    }
+    return resultados;
   }
 
   distanciaEntre(sujeitoNome: string, objetoNome: string): number | undefined {

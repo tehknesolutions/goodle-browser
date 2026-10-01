@@ -101,6 +101,18 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     }
   }
 
+  if (comando === "contatos" || comando === "contacts") {
+    if (partes.length === 1) return comLinha(criarNoSemantico("fisica.contatos", "mundo", {}), linha);
+  }
+  if (comando === "colisao" || comando === "collision") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    if (["continua", "continuous"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.colisao_continua", "mundo", {}), linha);
+  }
+  if (comando === "resolver" || comando === "resolve") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    if (["contatos", "contacts"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.resolver_contatos", "mundo", {}), linha);
+  }
+
   if (comando === "simular" || comando === "simulate") {
     const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
     const dt = numero(partes[2]);

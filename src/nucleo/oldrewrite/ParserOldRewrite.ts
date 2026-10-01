@@ -101,6 +101,19 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     }
   }
 
+  if (comando === "evento" || comando === "event") {
+    if (["acordar", "wake"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.evento_acordar", "mundo", {}), linha);
+  }
+  if (comando === "ilhas" || comando === "islands") {
+    if (partes.length === 1) return comLinha(criarNoSemantico("fisica.ilhas", "mundo", {}), linha);
+  }
+  if (comando === "ativar" || comando === "activate") {
+    if (["ilha", "island"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.ativar_ilha", "mundo", {}), linha);
+  }
+  if (comando === "estado" || comando === "state") {
+    if (["ilhas", "islands"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.estado_ilhas", "mundo", {}), linha);
+  }
+
   if (comando === "dormir" || comando === "sleep") {
     const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
     if (["fisica", "physics"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.sleep", "mundo", {}), linha);

@@ -13,7 +13,7 @@ export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: Evento
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();\n  private repousoFisico = { velocidade: 0.01, forca: 0.01, steps: 3 };\n  private contadorRepouso = new Map<string, number>();
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();\n  private repousoFisico = { velocidade: 0.01, forca: 0.01, steps: 3 };\n  private contadorRepouso = new Map<string, number>();\n  private ilhasFisicas: Array<{ id: string; membros: string[] }> = [];
 
   suporta(semantica: string): boolean {
     return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
@@ -85,6 +85,22 @@ export class RuntimeMemoria implements RuntimeGoodle {
       } else entidade.fisica.bloqueado = true;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { fisica: { ...entidade.fisica } } };
     }
+    if (no.semantica === "fisica.evento_acordar") {
+      const acordadas: string[] = [];
+      for (const entidade of this.estadoEntidades) if (entidade.fisica && !entidade.fisica.bloqueado) acordadas.push(...this.acordarIlhaDo(entidade.nome));
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { acordadas: [...new Set(acordadas)].sort((a,b)=>a.localeCompare(b)) } };
+    }
+    if (no.semantica === "fisica.ilhas" || no.semantica === "fisica.estado_ilhas") {
+      const ilhas=this.recalcularIlhasFisicas();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ilhas } };
+    }
+    if (no.semantica === "fisica.ativar_ilha") {
+      const ilhas=this.recalcularIlhasFisicas();
+      const acordadas:string[]=[];
+      for(const ilha of ilhas) acordadas.push(...this.acordarIlhaDo(ilha.membros[0]));
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ilhas: [...new Set(acordadas)].sort((a,b)=>a.localeCompare(b)) } };
+    }
+
     if (no.semantica === "fisica.limiar_repouso") {
       const valor = Number(no.parametros?.valor);
       if (!(valor > 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "limiar_invalido", valor } };
@@ -303,6 +319,26 @@ export class RuntimeMemoria implements RuntimeGoodle {
       case "espaco.perto": return distancia <= 5;
       default: return false;
     }
+  }
+
+  recalcularIlhasFisicas(): Array<{ id: string; membros: string[] }> {
+    const nomes = this.estadoEntidades.map(e=>e.nome).sort((a,b)=>a.localeCompare(b));
+    const parent = new Map<string,string>(nomes.map(n=>[n,n]));
+    const find=(x:string):string=>{let p=parent.get(x)??x; while(p!==(parent.get(p)??p)){p=parent.get(p)??p;} return p;};
+    const union=(a:string,b:string)=>{const pa=find(a),pb=find(b);if(pa!==pb) parent.set(pb,pa);};
+    for(const chave of this.contatosPersistentesCache.keys()){const [a,b]=chave.split("/");if(parent.has(a)&&parent.has(b))union(a,b);}
+    const grupos=new Map<string,string[]>();
+    for(const n of nomes){const root=find(n);const g=grupos.get(root)??[];g.push(n);grupos.set(root,g);}
+    this.ilhasFisicas=[...grupos.values()].map(membros=>({id:membros.join("|"),membros:[...membros].sort((a,b)=>a.localeCompare(b))})).sort((a,b)=>a.id.localeCompare(b.id));
+    return this.ilhasFisicas;
+  }
+
+  acordarIlhaDo(nome:string): string[] {
+    this.recalcularIlhasFisicas();
+    const ilha=this.ilhasFisicas.find(i=>i.membros.includes(nome));
+    if(!ilha) return [];
+    for(const membro of ilha.membros){const e=this.estadoEntidades.find(x=>x.nome===membro);if(e?.fisica&&!e.fisica.bloqueado){e.fisica.dormindo=false;this.contadorRepouso.set(membro,0);}}
+    return ilha.membros;
   }
 
   contatosPersistentes(): Array<{ sujeito: string; objeto: string; normal: { x: number; y: number }; penetracao: number; impulsoNormal: number }> {

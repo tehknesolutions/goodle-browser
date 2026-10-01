@@ -22,6 +22,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private manifoldCache = new Map<string, { assinatura: string; sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number; impulsoNormal: number; impulsoTangencial: number }>();
   private warmStartAtivo = false;
   private warmStartAplicados = new Set<string>();
+  private solverContatoEstado = new Map<string, { assinatura: string; iteracoes: number; impulsoNormal: number; impulsoTangencial: number; normal: { x: number; y: number }; penetracao: number }>();
   private broadphaseTamanhoCelula = 4;
 
   suporta(semantica: string): boolean {
@@ -139,6 +140,36 @@ export class RuntimeMemoria implements RuntimeGoodle {
     }
     if (no.semantica === "fisica.warm_start_estado") {
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ativo: this.warmStartAtivo, aplicados: [...this.warmStartAplicados].sort((a,b)=>a.localeCompare(b)), manifolds: [...this.manifoldCache.values()].filter(m=>m.colidiu).sort((a,b)=>this.chavePar(a.sujeito,a.objeto).localeCompare(this.chavePar(b.sujeito,b.objeto))).map(m=>({par:this.chavePar(m.sujeito,m.objeto),impulsoNormal:m.impulsoNormal,impulsoTangencial:m.impulsoTangencial})) } };
+    }
+
+    if (no.semantica === "fisica.solver.estado") {
+      this.reconciliarSolverEstado();
+      const estado=[...this.solverContatoEstado.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([par,v])=>({par,...v}));
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { iteracoesConfiguradas:this.regrasFisicas.iteracoes, contatos:estado, quantidade:estado.length } };
+    }
+    if (no.semantica === "fisica.solver.iterar") {
+      const resultado=this.resolverColisoes(this.regrasFisicas.broadphase ? this.candidatosColisao() : undefined);
+      this.registrarEstadoSolver(resultado);
+      this.reconciliarSolverEstado();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { iteracao: Math.max(...[...this.solverContatoEstado.values()].map(v=>v.iteracoes),0), contatos:resultado.filter(r=>r.colidiu), deterministico:true } };
+    }
+    if (no.semantica === "fisica.solver.aplicar") {
+      this.reconciliarSolverEstado();
+      const contatos=[...this.solverContatoEstado.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+      let aplicados=0;
+      for(const [par,v] of contatos) {
+        const [sujeito,objeto]=par.split("/");
+        const a=this.estadoEntidades.find(e=>e.nome===sujeito), bb=this.estadoEntidades.find(e=>e.nome===objeto);
+        if(!a?.fisica||!bb?.fisica) continue;
+        const invA=a.fisica.bloqueado?0:1/Number(a.fisica.massa??1), invB=bb.fisica.bloqueado?0:1/Number(bb.fisica.massa??1);
+        const tx=-v.normal.y, ty=v.normal.x;
+        a.fisica.vx-=(v.impulsoNormal*v.normal.x+v.impulsoTangencial*tx)*invA;
+        a.fisica.vy-=(v.impulsoNormal*v.normal.y+v.impulsoTangencial*ty)*invA;
+        bb.fisica.vx+=(v.impulsoNormal*v.normal.x+v.impulsoTangencial*tx)*invB;
+        bb.fisica.vy+=(v.impulsoNormal*v.normal.y+v.impulsoTangencial*ty)*invB;
+        aplicados++;
+      }
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado:aplicados, contatos:contatos.map(([par])=>par) } };
     }
 
     if (no.semantica === "fisica.manifold_cache" || no.semantica === "fisica.manifold_atualizar") {
@@ -476,6 +507,29 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { xMin: entidade.posicao.x, xMax: entidade.posicao.x, yMin: entidade.posicao.y, yMax: entidade.posicao.y };
   }
 
+  private reconciliarSolverEstado(): void {
+    const candidatos=new Set(this.candidatosColisao().map(p=>this.chavePar(p.sujeito,p.objeto)));
+    for(const [chave,estado] of [...this.solverContatoEstado.entries()]) {
+      const partes=chave.split("/");
+      if(partes.length!==2 || !candidatos.has(chave) || this.assinaturaManifold(partes[0],partes[1])!==estado.assinatura) this.solverContatoEstado.delete(chave);
+    }
+  }
+
+  private registrarEstadoSolver(resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number; impulsoNormal?: number; impulsoTangencial?: number }>): void {
+    for(const resultado of resultados.filter(r=>r.colidiu)) {
+      const chave=this.chavePar(resultado.sujeito,resultado.objeto);
+      const anterior=this.solverContatoEstado.get(chave);
+      this.solverContatoEstado.set(chave,{
+        assinatura:this.assinaturaManifold(resultado.sujeito,resultado.objeto),
+        iteracoes:(anterior?.iteracoes ?? 0)+1,
+        impulsoNormal:resultado.impulsoNormal ?? anterior?.impulsoNormal ?? 0,
+        impulsoTangencial:resultado.impulsoTangencial ?? anterior?.impulsoTangencial ?? 0,
+        normal:resultado.normal,
+        penetracao:resultado.penetracao
+      });
+    }
+  }
+
   private assinaturaManifold(sujeito: string, objeto: string): string {
     return this.assinaturaPar(sujeito, objeto);
   }
@@ -512,6 +566,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
     this.narrowphaseCache.clear();
     this.manifoldCache.clear();
     this.warmStartAplicados.clear();
+    this.solverContatoEstado.clear();
   }
 
   reconciliarCoerenciaColisao(): Array<{ par: string; estado: string }> {

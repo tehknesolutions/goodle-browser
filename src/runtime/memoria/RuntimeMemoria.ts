@@ -16,7 +16,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();\n  private repousoFisico = { velocidade: 0.01, forca: 0.01, steps: 3 };\n  private contadorRepouso = new Map<string, number>();\n  private ilhasFisicas: Array<{ id: string; membros: string[] }> = [];
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "fisica.evento_acordar", "fisica.ilhas", "fisica.ativar_ilha", "fisica.estado_ilhas", "fisica.sleep", "fisica.acordar", "fisica.estado_repouso", "fisica.limiar_repouso", "fisica.colisao_continua", "fisica.contatos_persistentes", "fisica.resolver_contatos_persistentes", "fisica.contatos", "fisica.resolver_contatos", "fisica.iteracoes", "fisica.simular", "fisica.broadphase", "fisica.particao_espacial", "fisica.candidatos_colisao", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -99,6 +99,11 @@ export class RuntimeMemoria implements RuntimeGoodle {
       const acordadas:string[]=[];
       for(const ilha of ilhas) acordadas.push(...this.acordarIlhaDo(ilha.membros[0]));
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { ilhas: [...new Set(acordadas)].sort((a,b)=>a.localeCompare(b)) } };
+    }
+
+    if (no.semantica === "fisica.broadphase" || no.semantica === "fisica.particao_espacial" || no.semantica === "fisica.candidatos_colisao") {
+      const candidatos = this.candidatosColisao();
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, celula: 4, deterministico: true } };
     }
 
     if (no.semantica === "fisica.limiar_repouso") {
@@ -319,6 +324,54 @@ export class RuntimeMemoria implements RuntimeGoodle {
       case "espaco.perto": return distancia <= 5;
       default: return false;
     }
+  }
+
+  aabbEntidade(entidade: EntidadeMemoria): { xMin: number; xMax: number; yMin: number; yMax: number } | undefined {
+    if (!entidade.posicao || !entidade.geometria) return undefined;
+    const g = entidade.geometria;
+    if (g.tipo === "circulo") {
+      const r = Math.max(0, Number(g.raio ?? 0));
+      return { xMin: entidade.posicao.x - r, xMax: entidade.posicao.x + r, yMin: entidade.posicao.y - r, yMax: entidade.posicao.y + r };
+    }
+    if (g.tipo === "retangulo") {
+      const hx = Math.max(0, Number(g.largura ?? 0)) / 2;
+      const hy = Math.max(0, Number(g.altura ?? 0)) / 2;
+      return { xMin: entidade.posicao.x - hx, xMax: entidade.posicao.x + hx, yMin: entidade.posicao.y - hy, yMax: entidade.posicao.y + hy };
+    }
+    return { xMin: entidade.posicao.x, xMax: entidade.posicao.x, yMin: entidade.posicao.y, yMax: entidade.posicao.y };
+  }
+
+  candidatosColisao(): Array<{ sujeito: string; objeto: string }> {
+    const tamanhoCelula = 4;
+    const grade = new Map<string, string[]>();
+    for (const entidade of this.estadoEntidades) {
+      const aabb = this.aabbEntidade(entidade);
+      if (!aabb) continue;
+      const minX = Math.floor(aabb.xMin / tamanhoCelula), maxX = Math.floor(aabb.xMax / tamanhoCelula);
+      const minY = Math.floor(aabb.yMin / tamanhoCelula), maxY = Math.floor(aabb.yMax / tamanhoCelula);
+      for (let x = minX; x <= maxX; x++) for (let y = minY; y <= maxY; y++) {
+        const chave = x + "," + y;
+        const lista = grade.get(chave) ?? [];
+        lista.push(entidade.nome);
+        grade.set(chave, lista);
+      }
+    }
+    const nomes = new Map(this.estadoEntidades.map(e => [e.nome, e]));
+    const pares = new Set<string>();
+    for (const lista of grade.values()) {
+      const ordenada = [...lista].sort((a, b) => a.localeCompare(b));
+      for (let i = 0; i < ordenada.length; i++) for (let j = i + 1; j < ordenada.length; j++) {
+        const a = nomes.get(ordenada[i]), b = nomes.get(ordenada[j]);
+        if (!a || !b) continue;
+        const aa = this.aabbEntidade(a), bb = this.aabbEntidade(b);
+        if (!aa || !bb) continue;
+        if (aa.xMin <= bb.xMax && aa.xMax >= bb.xMin && aa.yMin <= bb.yMax && aa.yMax >= bb.yMin) pares.add(a.nome + "/" + b.nome);
+      }
+    }
+    return [...pares].map(chave => {
+      const partes = chave.split("/");
+      return { sujeito: partes[0], objeto: partes[1] };
+    }).sort((a, b) => a.sujeito.localeCompare(b.sujeito) || a.objeto.localeCompare(b.objeto));
   }
 
   recalcularIlhasFisicas(): Array<{ id: string; membros: string[] }> {

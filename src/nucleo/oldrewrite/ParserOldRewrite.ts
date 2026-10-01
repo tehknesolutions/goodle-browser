@@ -101,6 +101,16 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     }
   }
 
+  if (comando === "broadphase") {
+    if (partes.length === 1) return comLinha(criarNoSemantico("fisica.broadphase", "mundo", {}), linha);
+  }
+  if (comando === "particao" || comando === "partition") {
+    if (["espacial", "spatial"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.particao_espacial", "mundo", {}), linha);
+  }
+  if (comando === "candidatos" || comando === "candidates") {
+    if (["colisao", "colisão", "collision"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.candidatos_colisao", "mundo", {}), linha);
+  }
+
   if (comando === "evento" || comando === "event") {
     if (["acordar", "wake"].includes(partes[1]?.toLocaleLowerCase("pt-BR") ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.evento_acordar", "mundo", {}), linha);
   }

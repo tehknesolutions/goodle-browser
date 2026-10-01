@@ -92,6 +92,20 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
       return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.atualizar" }), linha);
     }
 
+    const acaoInput = partes[1]?.toLocaleLowerCase("pt-BR");
+    const tipoInput = partes[2]?.toLocaleLowerCase("pt-BR");
+    const identificadorInput = partes.slice(3).join(" ");
+
+    if ((acaoInput === "pressionar" || acaoInput === "press") && (tipoInput === "tecla" || tipoInput === "key") && identificadorInput) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.tecla.pressionar", codigo: identificadorInput }), linha);
+    }
+    if ((acaoInput === "soltar" || acaoInput === "release") && (tipoInput === "tecla" || tipoInput === "key") && identificadorInput) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.tecla.soltar", codigo: identificadorInput }), linha);
+    }
+    if ((acaoInput === "clicar" || acaoInput === "click") && identificadorInput) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.clique", alvo: identificadorInput }), linha);
+    }
+
     const fonte = partes[1]; const evento = partes[2]?.toLocaleLowerCase("pt-BR"); const alvo = partes[3];
     if (!fonte || !alvo || !["tocar", "toque", "touch", "touches"].includes(evento) || partes.length !== 4) throw new ErroParserOldRewrite(linha, texto.trim());
     return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.toque", fonte, alvo }), linha);

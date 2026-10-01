@@ -85,9 +85,7 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
 
   if (comando === "quando" || comando === "when") {
     const temporal = partes[1]?.toLocaleLowerCase("pt-BR");
-    const unidadeTemporal = partes[2]?.toLocaleLowerCase("pt-BR");
     const duracaoTemporal = numero(partes[2]);
-    const identificadorTemporal = partes[3];
 
     if ((temporal === "temporizador" || temporal === "timer" || temporal === "timeout") && duracaoTemporal !== undefined && partes.length === 3) {
       return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.temporizador.disparar", duracaoMs: duracaoTemporal }), linha);

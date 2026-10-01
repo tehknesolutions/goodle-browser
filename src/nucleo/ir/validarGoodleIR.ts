@@ -25,7 +25,7 @@ const requisitos: Record<string, string[]> = {
   "dados.valor.definir": ["entidade", "propriedade", "valor"],
   "dados.valor.diminuir": ["entidade", "propriedade", "valor"],
   "dados.valor.aumentar": ["entidade", "propriedade", "valor"],
-  "logica.condicao.se": ["entidade", "propriedade", "operador", "valor"],
+  "logica.condicao.se": [],
 };
 
 function parametroAusente(valor: unknown): boolean {
@@ -48,6 +48,16 @@ function validarNo(no: GoodleIRNode, caminho: string, diagnosticos: DiagnosticoI
         codigo: "PARAMETRO_OBRIGATORIO_AUSENTE",
         mensagem: `Parâmetro obrigatório ausente: ${parametro}`,
       });
+    }
+  }
+
+  if (no.semantica === "logica.condicao.se" && no.parametros?.relacao) {
+    for (const parametro of ["sujeito", "objeto", "relacao"]) {
+      if (parametroAusente(no.parametros?.[parametro])) diagnosticos.push({ caminho: `${caminho}.parametros.${parametro}`, codigo: "PARAMETRO_OBRIGATORIO_AUSENTE", mensagem: `Parâmetro obrigatório ausente: ${parametro}` });
+    }
+  } else if (no.semantica === "logica.condicao.se") {
+    for (const parametro of ["entidade", "propriedade", "operador", "valor"]) {
+      if (parametroAusente(no.parametros?.[parametro])) diagnosticos.push({ caminho: `${caminho}.parametros.${parametro}`, codigo: "PARAMETRO_OBRIGATORIO_AUSENTE", mensagem: `Parâmetro obrigatório ausente: ${parametro}` });
     }
   }
 

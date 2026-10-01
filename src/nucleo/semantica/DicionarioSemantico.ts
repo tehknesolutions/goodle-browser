@@ -13,6 +13,7 @@ const aliases: AliasSemantico[] = [
   entrada("comportamento.reacao.quando", "quando", ["quando", "when"]), entrada("comportamento.evento", "evento", ["evento"]),
   entrada("comportamento.acao", "ação", ["ação", "acao"]), entrada("comportamento.emissao", "emitir", ["emitir", "emit"]),
   entrada("evento.toque", "tocar", ["tocar", "toque", "touch", "touches"]),
+  entrada("evento.iniciar", "iniciar", ["iniciar", "start"]), entrada("evento.atualizar", "atualizar", ["atualizar", "update"]),
   entrada("dados.valor.definir", "definir", ["definir", "set"]), entrada("dados.valor.diminuir", "diminuir", ["diminuir", "decrease"]),
   entrada("comportamento.funcao", "função", ["função", "funcao"]), entrada("estrutura.entidade", "entidade", ["entidade", "entity"]),
   entrada("estrutura.componente", "componente", ["componente"]), entrada("estrutura.cena", "cena", ["cena"]), entrada("estrutura.mundo", "mundo", ["mundo"]),

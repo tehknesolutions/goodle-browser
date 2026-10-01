@@ -61,6 +61,16 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico("diminuir", "comportamento", { entidade, propriedade, valor }), linha);
   }
 
+  if (comando === "aumentar" || comando === "increase") {
+    const propriedade = partes[1];
+    const conectorEntidade = partes[2]?.toLocaleLowerCase("pt-BR");
+    const entidade = partes[3];
+    const conectorValor = partes[4]?.toLocaleLowerCase("pt-BR");
+    const valor = numero(partes[5]);
+    if (!propriedade || !entidade || !["de", "of"].includes(conectorEntidade) || !["em", "by"].includes(conectorValor) || valor === undefined || partes.length !== 6) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico("aumentar", "comportamento", { entidade, propriedade, valor }), linha);
+  }
+
   if (comando === "se" || comando === "if") {
     const propriedade = partes[1];
     const conectorEntidade = partes[2]?.toLocaleLowerCase("pt-BR");
@@ -74,6 +84,14 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
   }
 
   if (comando === "quando" || comando === "when") {
+    const primeiro = partes[1]?.toLocaleLowerCase("pt-BR");
+    if ((primeiro === "iniciar" || primeiro === "start") && partes.length === 2) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.iniciar" }), linha);
+    }
+    if ((primeiro === "atualizar" || primeiro === "update") && partes.length === 2) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.atualizar" }), linha);
+    }
+
     const fonte = partes[1]; const evento = partes[2]?.toLocaleLowerCase("pt-BR"); const alvo = partes[3];
     if (!fonte || !alvo || !["tocar", "toque", "touch", "touches"].includes(evento) || partes.length !== 4) throw new ErroParserOldRewrite(linha, texto.trim());
     return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.toque", fonte, alvo }), linha);

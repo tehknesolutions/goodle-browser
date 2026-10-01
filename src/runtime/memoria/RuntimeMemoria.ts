@@ -121,3 +121,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { estado: "executado", evento, acoesExecutadas };
   }
 
+  entidades(): EntidadeMemoria[] {
+    return this.estadoEntidades.map((entidade) => ({ ...entidade, ...(entidade.posicao ? { posicao: { ...entidade.posicao } } : {}), ...(entidade.propriedades ? { propriedades: { ...entidade.propriedades } } : {}) }));
+  }
+}

@@ -43,6 +43,13 @@ function validarNo(no: GoodleIRNode, caminho: string, diagnosticos: DiagnosticoI
 
   if (no.semantica === "comportamento.reacao.quando") {
     const evento = String(no.parametros?.evento ?? "");
+    if (["evento.temporizador.disparar", "evento.tempo.esperar", "evento.tempo.intervalo"].includes(evento) && parametroAusente(no.parametros?.duracaoMs)) {
+      diagnosticos.push({ caminho: `${caminho}.parametros.duracaoMs`, codigo: "PARAMETRO_OBRIGATORIO_AUSENTE", mensagem: "Duração temporal obrigatória ausente" });
+    }
+  }
+
+  if (no.semantica === "comportamento.reacao.quando") {
+    const evento = String(no.parametros?.evento ?? "");
     if (evento === "evento.toque") {
       for (const parametro of ["fonte", "alvo"]) {
         if (parametroAusente(no.parametros?.[parametro])) {

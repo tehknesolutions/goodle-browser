@@ -84,6 +84,18 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
   }
 
   if (comando === "quando" || comando === "when") {
+    const temporal = partes[1]?.toLocaleLowerCase("pt-BR");
+    const duracaoTemporal = numero(partes[2]);
+
+    if ((temporal === "temporizador" || temporal === "timer" || temporal === "timeout") && duracaoTemporal !== undefined && partes.length === 3) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.temporizador.disparar", duracaoMs: duracaoTemporal }), linha);
+    }
+    if ((temporal === "intervalo" || temporal === "interval" || temporal === "a_cada") && duracaoTemporal !== undefined && partes.length === 3) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.tempo.intervalo", duracaoMs: duracaoTemporal }), linha);
+    }
+    if ((temporal === "esperar" || temporal === "wait") && duracaoTemporal !== undefined && partes.length === 3) {
+      return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.tempo.esperar", duracaoMs: duracaoTemporal }), linha);
+    }
     const primeiro = partes[1]?.toLocaleLowerCase("pt-BR");
     if ((primeiro === "iniciar" || primeiro === "start") && partes.length === 2) {
       return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.iniciar" }), linha);

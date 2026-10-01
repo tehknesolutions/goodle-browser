@@ -1,2 +1,4 @@
 import{describe,expect,it}from"vitest";import{createQuest,advanceQuest}from"./QuestRules";
 describe("QuestRules",()=>{it("creates deterministic quest kinds from seed",()=>{expect(createQuest(1,"raider","sun-shard").kind).toBe("hunt");expect(createQuest(2,"raider","sun-shard").kind).toBe("collect");expect(createQuest(3,"raider","sun-shard").kind).toBe("reach")});it("completes matching hunt progress",()=>{let q=createQuest(1,"raider","sun-shard");q=advanceQuest(q,{type:"defeat",target:"raider"});q=advanceQuest(q,{type:"defeat",target:"raider"});expect(q.completed).toBe(true);expect(q.progress).toBe(2)})});
+
+describe("generated hunt quest",()=>{it("does not require more enemies than the world has",()=>{expect(createQuest(1,"stalker","seed",1).required).toBe(1);expect(createQuest(1,"stalker","seed",4).required).toBe(2)})});

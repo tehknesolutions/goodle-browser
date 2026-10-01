@@ -13,10 +13,10 @@ export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: Evento
 
 export class RuntimeMemoria implements RuntimeGoodle {
   private readonly estadoEntidades: EntidadeMemoria[] = [];
-  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean } = { iteracoes: 4, ccd: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();\n  private repousoFisico = { velocidade: 0.01, forca: 0.01, steps: 3 };\n  private contadorRepouso = new Map<string, number>();\n  private ilhasFisicas: Array<{ id: string; membros: string[] }> = [];
+  private readonly comportamentos: GoodleIRNode[] = [];\n  private readonly cenas: CenaMemoria[] = [];\n  private cenaAtual: string | undefined;\n  private regrasFisicas: { limites?: { xMin: number; xMax: number; yMin: number; yMax: number }; superficieY?: number; iteracoes: number; ccd: boolean; broadphase: boolean } = { iteracoes: 4, ccd: false, broadphase: false };\n  private contatosPersistentesCache = new Map<string, { impulsoNormal: number; normal: { x: number; y: number }; penetracao: number }>();\n  private repousoFisico = { velocidade: 0.01, forca: 0.01, steps: 3 };\n  private contadorRepouso = new Map<string, number>();\n  private ilhasFisicas: Array<{ id: string; membros: string[] }> = [];
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "fisica.evento_acordar", "fisica.ilhas", "fisica.ativar_ilha", "fisica.estado_ilhas", "fisica.sleep", "fisica.acordar", "fisica.estado_repouso", "fisica.limiar_repouso", "fisica.colisao_continua", "fisica.contatos_persistentes", "fisica.resolver_contatos_persistentes", "fisica.contatos", "fisica.resolver_contatos", "fisica.iteracoes", "fisica.simular", "fisica.broadphase", "fisica.particao_espacial", "fisica.candidatos_colisao", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "entidade.ativar", "entidade.desativar", "entidade.spawn", "entidade.despawn", "estrutura.cena", "cena.transicao", "espaco.posicao", "espaco.movimento", "espaco.rotacao", "espaco.escala", "geometria.ponto", "geometria.circulo", "geometria.retangulo", "fisica.velocidade", "fisica.aceleracao", "fisica.gravidade", "fisica.massa", "fisica.impulso", "fisica.atualizar", "fisica.limite", "fisica.superficie", "fisica.atrito", "fisica.restituicao", "fisica.bloqueio", "fisica.aplicar_regras", "fisica.evento_acordar", "fisica.ilhas", "fisica.ativar_ilha", "fisica.estado_ilhas", "fisica.sleep", "fisica.acordar", "fisica.estado_repouso", "fisica.limiar_repouso", "fisica.colisao_continua", "fisica.contatos_persistentes", "fisica.resolver_contatos_persistentes", "fisica.contatos", "fisica.resolver_contatos", "fisica.iteracoes", "fisica.simular", "fisica.broadphase", "fisica.particao_espacial", "fisica.candidatos_colisao", "fisica.broadphase_ativar", "fisica.broadphase_desativar", "fisica.pares_colisao", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -106,6 +106,19 @@ export class RuntimeMemoria implements RuntimeGoodle {
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, celula: 4, deterministico: true } };
     }
 
+    if (no.semantica === "fisica.broadphase_ativar") {
+      this.regrasFisicas.broadphase = true;
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { broadphase: true } };
+    }
+    if (no.semantica === "fisica.broadphase_desativar") {
+      this.regrasFisicas.broadphase = false;
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { broadphase: false } };
+    }
+    if (no.semantica === "fisica.pares_colisao") {
+      const candidatos = this.regrasFisicas.broadphase ? this.candidatosColisao() : this.estadoEntidades.flatMap((a, i) => this.estadoEntidades.slice(i + 1).map(b => ({ sujeito: a.nome, objeto: b.nome })));
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { candidatos, estrategia: this.regrasFisicas.broadphase ? "broadphase" : "all-pairs" } };
+    }
+
     if (no.semantica === "fisica.limiar_repouso") {
       const valor = Number(no.parametros?.valor);
       if (!(valor > 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { motivo: "limiar_invalido", valor } };
@@ -168,7 +181,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       const regras = this.executar({ id: `${no.id}:regras`, semantica: "fisica.aplicar_regras", familia: "mundo", parametros: { dt } });
       const colisoes: unknown[] = [];
       for (let i = 0; i < this.regrasFisicas.iteracoes; i++) {
-        const resultado = this.resolverColisoes();
+        const resultado = this.resolverColisoes(this.regrasFisicas.broadphase ? this.candidatosColisao() : undefined);
         colisoes.push(...resultado.filter((item) => item.colidiu));
         if (resultado.every((item) => !item.colidiu)) break;
       }
@@ -190,8 +203,8 @@ export class RuntimeMemoria implements RuntimeGoodle {
     }
 
     if (no.semantica === "fisica.colisao_resolver") {
-      const colisoes = this.resolverColisoes();
-      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, colisoes } };
+      const colisoes = this.resolverColisoes(this.regrasFisicas.broadphase ? this.candidatosColisao() : undefined);
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, colisoes, estrategia: this.regrasFisicas.broadphase ? "broadphase" : "all-pairs" } };
     }
 
     if (no.semantica === "fisica.aplicar_regras") {
@@ -221,7 +234,6 @@ export class RuntimeMemoria implements RuntimeGoodle {
     }
 
     if (no.semantica === "fisica.atualizar") {
-      const dt = Number(no.parametros?.dt);
       const dt = Number(no.parametros?.dt);
       if (!(dt >= 0)) return { estado: "nao_suportado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "dt_invalido", dt } };
       for (const entidade of this.estadoEntidades) {
@@ -474,10 +486,12 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return resultados.sort((a,b) => a.toi-b.toi || a.sujeito.localeCompare(b.sujeito) || a.objeto.localeCompare(b.objeto));
   }
 
-  resolverColisoes(): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> {
+  resolverColisoes(candidatos?: Array<{ sujeito: string; objeto: string }>): Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> {
     const resultados: Array<{ sujeito: string; objeto: string; colidiu: boolean; normal: { x: number; y: number }; penetracao: number }> = [];
-    for (let i = 0; i < this.estadoEntidades.length; i++) for (let j = i + 1; j < this.estadoEntidades.length; j++) {
-      const a = this.estadoEntidades[i]; const b = this.estadoEntidades[j];
+    const pares = candidatos ?? this.estadoEntidades.flatMap((a, i) => this.estadoEntidades.slice(i + 1).map(b => ({ sujeito: a.nome, objeto: b.nome })));
+    for (const par of pares) {
+      const a = this.estadoEntidades.find(e => e.nome === par.sujeito); const b = this.estadoEntidades.find(e => e.nome === par.objeto);
+      if (!a || !b) continue;
       if (!a.posicao || !b.posicao || !a.geometria || !b.geometria) continue;
       let nx = b.posicao.x - a.posicao.x; let ny = b.posicao.y - a.posicao.y;
       const d = Math.sqrt(nx * nx + ny * ny) || 0;

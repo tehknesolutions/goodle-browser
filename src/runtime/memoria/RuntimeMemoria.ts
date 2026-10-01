@@ -7,7 +7,7 @@ export type EntidadeMemoria = {
   posicao?: { x: number; y: number };
   propriedades?: Record<string, number>;
 };
-export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string };
+export type EventoRuntimeGoodle = { semantica: string; fonte?: string; alvo?: string; codigo?: string; botao?: string; temporizadorId?: string; duracaoMs?: number };
 export type EstadoEventoGoodle = "executado" | "evento_desconhecido" | "entidade_nao_encontrada" | "propriedade_nao_encontrada" | "condicao_nao_suportada";
 export type ResultadoEventoGoodle = { estado: EstadoEventoGoodle; evento: EventoRuntimeGoodle; acoesExecutadas?: number; detalhe?: string };
 
@@ -80,7 +80,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   }
 
   emitir(evento: EventoRuntimeGoodle): ResultadoEventoGoodle {
-    const eventosSuportados = ["evento.toque", "evento.iniciar", "evento.atualizar", "evento.tecla.pressionar", "evento.tecla.soltar", "evento.clique"];
+    const eventosSuportados = ["evento.toque", "evento.iniciar", "evento.atualizar", "evento.tecla.pressionar", "evento.tecla.soltar", "evento.clique", "evento.temporizador.disparar", "evento.tempo.esperar", "evento.tempo.intervalo"];
     if (!eventosSuportados.includes(evento.semantica)) return { estado: "evento_desconhecido", evento };
     if (evento.semantica === "evento.toque" && (!this.estadoEntidades.some((e) => e.nome === evento.fonte) || (evento.alvo && !this.estadoEntidades.some((e) => e.nome === evento.alvo)))) {
       return { estado: "entidade_nao_encontrada", evento };
@@ -91,6 +91,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
       if (evento.semantica === "evento.toque") return c.parametros?.fonte === evento.fonte && c.parametros?.alvo === evento.alvo;
       if (evento.semantica === "evento.clique") return c.parametros?.alvo === evento.alvo;
       if (evento.semantica === "evento.tecla.pressionar" || evento.semantica === "evento.tecla.soltar") return c.parametros?.codigo === evento.codigo;
+      if (evento.semantica === "evento.temporizador.disparar" || evento.semantica === "evento.tempo.esperar" || evento.semantica === "evento.tempo.intervalo") return Number(c.parametros?.duracaoMs) === Number(evento.duracaoMs) && (!c.parametros?.temporizadorId || c.parametros?.temporizadorId === evento.temporizadorId);
       return true;
     });
     let acoesExecutadas = 0;

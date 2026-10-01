@@ -61,6 +61,18 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     return comLinha(criarNoSemantico("diminuir", "comportamento", { entidade, propriedade, valor }), linha);
   }
 
+  if (comando === "se" || comando === "if") {
+    const propriedade = partes[1];
+    const conectorEntidade = partes[2]?.toLocaleLowerCase("pt-BR");
+    const entidade = partes[3];
+    const comparador = partes[4]?.toLocaleLowerCase("pt-BR");
+    const comparadorSegundo = partes[5]?.toLocaleLowerCase("pt-BR");
+    const valor = numero(partes[6]);
+    const operador = (comparador === "maior" && comparadorSegundo === "que") || (comparador === "greater" && comparadorSegundo === "than") ? "maior_que" : (comparador === "menor" && comparadorSegundo === "que") || (comparador === "less" && comparadorSegundo === "than") ? "menor_que" : comparador === "igual" || comparador === "equals" ? "igual" : undefined;
+    if (!propriedade || !entidade || !["de", "of"].includes(conectorEntidade) || !operador || valor === undefined || partes.length !== 7) throw new ErroParserOldRewrite(linha, texto.trim());
+    return comLinha(criarNoSemantico("se", "comportamento", { entidade, propriedade, operador, valor }), linha);
+  }
+
   if (comando === "quando" || comando === "when") {
     const fonte = partes[1]; const evento = partes[2]?.toLocaleLowerCase("pt-BR"); const alvo = partes[3];
     if (!fonte || !alvo || !["tocar", "toque", "touch", "touches"].includes(evento) || partes.length !== 4) throw new ErroParserOldRewrite(linha, texto.trim());
@@ -72,36 +84,30 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
 
 export function parseOldRewrite(fonte: string): GoodleIRPrograma {
   const linhasBrutas = fonte.split(/\r?\n/);
-  const linhasNaoVazias = linhasBrutas
-    .map((texto, indice) => ({ texto, linha: indice + 1 }))
-    .filter(({ texto }) => texto.trim().length > 0);
-  const indentacaoBase = linhasNaoVazias.reduce((minimo, { texto }) => {
-    const largura = texto.match(/^\s*/)?.[0].length ?? 0;
-    return Math.min(minimo, largura);
-  }, Number.POSITIVE_INFINITY);
+  const linhasNaoVazias = linhasBrutas.map((texto, indice) => ({ texto, linha: indice + 1, largura: texto.match(/^\\s*/)?.[0].length ?? 0 })).filter(({ texto }) => texto.trim().length > 0);
+  const indentacaoBase = linhasNaoVazias.reduce((minimo, item) => Math.min(minimo, item.largura), Number.POSITIVE_INFINITY);
   const base = Number.isFinite(indentacaoBase) ? indentacaoBase : 0;
-  const linhas = linhasNaoVazias.map(({ texto, linha }) => {
-    const largura = texto.match(/^\s*/)?.[0].length ?? 0;
-    return { texto: texto.slice(Math.min(base, largura)), linha, indentada: largura > base };
-  });
-  const nos: GoodleIRNode[] = [];
+  const linhas = linhasNaoVazias.map(({ texto, linha, largura }) => ({ texto: texto.slice(Math.min(base, largura)), linha, largura: Math.max(0, largura - base) }));
 
-  for (let indice = 0; indice < linhas.length; indice += 1) {
-    const atual = linhas[indice];
-    if (atual.indentada) throw new ErroParserOldRewrite(atual.linha, atual.texto.trim());
-    const no = parseLinha(atual.texto, atual.linha);
-
-    if (no.semantica === "comportamento.reacao.quando") {
-      const filhos: GoodleIRNode[] = [];
-      while (indice + 1 < linhas.length && linhas[indice + 1].indentada) {
-        indice += 1;
-        const filha = linhas[indice];
-        filhos.push(parseLinha(filha.texto, filha.linha));
+  function bloco(inicio: number, nivel: number): { nos: GoodleIRNode[]; proximo: number } {
+    const nos: GoodleIRNode[] = [];
+    let indice = inicio;
+    while (indice < linhas.length) {
+      const atual = linhas[indice];
+      if (atual.largura < nivel) break;
+      if (atual.largura > nivel) throw new ErroParserOldRewrite(atual.linha, atual.texto.trim());
+      const no = parseLinha(atual.texto, atual.linha);
+      indice += 1;
+      if (indice < linhas.length && linhas[indice].largura > nivel) {
+        const filhoNivel = linhas[indice].largura;
+        const filhos = bloco(indice, filhoNivel);
+        no.filhos = filhos.nos;
+        indice = filhos.proximo;
       }
-      no.filhos = filhos;
+      nos.push(no);
     }
-    nos.push(no);
+    return { nos, proximo: indice };
   }
 
-  return { versao: "1", nos };
+  return { versao: "1", nos: bloco(0, 0).nos };
 }

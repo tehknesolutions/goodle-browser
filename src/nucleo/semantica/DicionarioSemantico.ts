@@ -8,6 +8,7 @@ const entrada = (idCanonico: string, termoPtBr: string, aliases: string[], orige
 
 const aliases: AliasSemantico[] = [
   entrada("logica.condicao.se", "se", ["se", "if"]), entrada("logica.condicao.senao", "senão", ["senão", "senao", "else"]),
+  entrada("logica.comparacao.maior_que", "maior que", ["maior que", "greater than"]), entrada("logica.comparacao.menor_que", "menor que", ["menor que", "less than"]), entrada("logica.comparacao.igual", "igual", ["igual", "equals", "equal to"]),
   entrada("logica.repeticao", "repetir", ["repetir", "loop"]), entrada("logica.repeticao.parar", "parar repetição", ["parar repetição", "parar repeticao", "break loop"]),
   entrada("comportamento.reacao.quando", "quando", ["quando", "when"]), entrada("comportamento.evento", "evento", ["evento"]),
   entrada("comportamento.acao", "ação", ["ação", "acao"]), entrada("comportamento.emissao", "emitir", ["emitir", "emit"]),

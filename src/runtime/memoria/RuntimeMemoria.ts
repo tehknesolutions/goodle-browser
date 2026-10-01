@@ -93,6 +93,34 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { estado: "executado", idNo: comportamento.id, semantica: comportamento.semantica, valor: { registrado: true } };
   }
 
+  private avaliarRelacaoEspacial(no: GoodleIRNode): boolean {
+    const sujeitoNome = String(no.parametros?.sujeito ?? "");
+    const objetoNome = String(no.parametros?.objeto ?? "");
+    const sujeito = this.estadoEntidades.find((e) => e.nome === sujeitoNome);
+    const objeto = this.estadoEntidades.find((e) => e.nome === objetoNome);
+    if (!sujeito?.posicao || !objeto?.posicao) return false;
+    const dx = sujeito.posicao.x - objeto.posicao.x;
+    const dy = sujeito.posicao.y - objeto.posicao.y;
+    const distancia = Math.sqrt(dx * dx + dy * dy);
+    switch (String(no.parametros?.relacao)) {
+      case "espaco.colisao":
+      case "espaco.sobreposicao":
+      case "espaco.dentro": return distancia <= 1;
+      case "espaco.fora": return distancia > 1;
+      case "espaco.perto": return distancia <= 5;
+      default: return false;
+    }
+  }
+
+  distanciaEntre(sujeitoNome: string, objetoNome: string): number | undefined {
+    const sujeito = this.estadoEntidades.find((e) => e.nome === sujeitoNome);
+    const objeto = this.estadoEntidades.find((e) => e.nome === objetoNome);
+    if (!sujeito?.posicao || !objeto?.posicao) return undefined;
+    const dx = sujeito.posicao.x - objeto.posicao.x;
+    const dy = sujeito.posicao.y - objeto.posicao.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
   private avaliarCondicao(no: GoodleIRNode): boolean {
     const nome = String(no.parametros?.entidade ?? "");
     const propriedade = String(no.parametros?.propriedade ?? "");
@@ -133,13 +161,17 @@ export class RuntimeMemoria implements RuntimeGoodle {
           if (!entidade.propriedades || entidade.propriedades[propriedade] === undefined) return { estado: "propriedade_nao_encontrada", evento, acoesExecutadas, detalhe: propriedade };
         }
         if (acao.semantica === "logica.condicao.se") {
-          const nome = String(acao.parametros?.entidade ?? "");
-          const propriedade = String(acao.parametros?.propriedade ?? "");
-          const entidade = this.estadoEntidades.find((e) => e.nome === nome);
-          if (!entidade) return { estado: "entidade_nao_encontrada", evento, acoesExecutadas };
-          if (!entidade.propriedades || entidade.propriedades[propriedade] === undefined) return { estado: "propriedade_nao_encontrada", evento, acoesExecutadas, detalhe: propriedade };
-          if (!["maior_que", "menor_que", "igual"].includes(String(acao.parametros?.operador))) return { estado: "condicao_nao_suportada", evento, acoesExecutadas, detalhe: String(acao.parametros?.operador) };
-          if (!this.avaliarCondicao(acao)) continue;
+          if (acao.parametros?.relacao) {
+            if (!this.avaliarRelacaoEspacial(acao)) continue;
+          } else {
+            const nome = String(acao.parametros?.entidade ?? "");
+            const propriedade = String(acao.parametros?.propriedade ?? "");
+            const entidade = this.estadoEntidades.find((e) => e.nome === nome);
+            if (!entidade) return { estado: "entidade_nao_encontrada", evento, acoesExecutadas };
+            if (!entidade.propriedades || entidade.propriedades[propriedade] === undefined) return { estado: "propriedade_nao_encontrada", evento, acoesExecutadas, detalhe: propriedade };
+            if (!["maior_que", "menor_que", "igual"].includes(String(acao.parametros?.operador))) return { estado: "condicao_nao_suportada", evento, acoesExecutadas, detalhe: String(acao.parametros?.operador) };
+            if (!this.avaliarCondicao(acao)) continue;
+          }
           for (const neta of acao.filhos ?? []) {
             const resultado = this.executar(neta);
             if (resultado.estado === "executado") acoesExecutadas += 1;

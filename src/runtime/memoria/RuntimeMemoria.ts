@@ -16,7 +16,7 @@ export class RuntimeMemoria implements RuntimeGoodle {
   private readonly comportamentos: GoodleIRNode[] = [];
 
   suporta(semantica: string): boolean {
-    return ["entidade.criar", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
+    return ["entidade.criar", "espaco.posicao", "espaco.movimento", "dados.valor.definir", "dados.valor.diminuir", "dados.valor.aumentar", "comportamento.reacao.quando", "logica.condicao.se"].includes(semantica);
   }
 
   executar(no: GoodleIRNode): ResultadoExecucao {
@@ -38,6 +38,12 @@ export class RuntimeMemoria implements RuntimeGoodle {
       const propriedade = String(no.parametros?.propriedade ?? ""); const valor = Number(no.parametros?.valor);
       entidade.propriedades ??= {}; entidade.propriedades[propriedade] = valor;
       return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, nome, propriedade, valor } };
+    }
+    if (no.semantica === "dados.valor.aumentar") {
+      const propriedade = String(no.parametros?.propriedade ?? ""); const valor = Number(no.parametros?.valor);
+      if (!entidade.propriedades || entidade.propriedades[propriedade] === undefined) return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: false, motivo: "propriedade_nao_encontrada", nome, propriedade } };
+      entidade.propriedades[propriedade] += valor;
+      return { estado: "executado", idNo: no.id, semantica: no.semantica, valor: { aplicado: true, nome, propriedade, valor: entidade.propriedades[propriedade] } };
     }
     if (no.semantica === "dados.valor.diminuir") {
       const propriedade = String(no.parametros?.propriedade ?? ""); const valor = Number(no.parametros?.valor);
@@ -74,13 +80,21 @@ export class RuntimeMemoria implements RuntimeGoodle {
   }
 
   emitir(evento: EventoRuntimeGoodle): ResultadoEventoGoodle {
-    if (evento.semantica !== "evento.toque") return { estado: "evento_desconhecido", evento };
-    if (!this.estadoEntidades.some((e) => e.nome === evento.fonte) || (evento.alvo && !this.estadoEntidades.some((e) => e.nome === evento.alvo))) return { estado: "entidade_nao_encontrada", evento };
-    const correspondentes = this.comportamentos.filter((c) => c.parametros?.evento === evento.semantica && c.parametros?.fonte === evento.fonte && c.parametros?.alvo === evento.alvo);
+    const eventosSuportados = ["evento.toque", "evento.iniciar", "evento.atualizar"];
+    if (!eventosSuportados.includes(evento.semantica)) return { estado: "evento_desconhecido", evento };
+    if (evento.semantica === "evento.toque" && (!this.estadoEntidades.some((e) => e.nome === evento.fonte) || (evento.alvo && !this.estadoEntidades.some((e) => e.nome === evento.alvo)))) {
+      return { estado: "entidade_nao_encontrada", evento };
+    }
+
+    const correspondentes = this.comportamentos.filter((c) => {
+      if (c.parametros?.evento !== evento.semantica) return false;
+      if (evento.semantica !== "evento.toque") return true;
+      return c.parametros?.fonte === evento.fonte && c.parametros?.alvo === evento.alvo;
+    });
     let acoesExecutadas = 0;
     for (const comportamento of correspondentes) {
       for (const acao of comportamento.filhos ?? []) {
-        if (acao.semantica === "dados.valor.diminuir") {
+        if (acao.semantica === "dados.valor.diminuir" || acao.semantica === "dados.valor.aumentar") {
           const entidade = this.estadoEntidades.find((e) => e.nome === String(acao.parametros?.entidade ?? ""));
           const propriedade = String(acao.parametros?.propriedade ?? "");
           if (!entidade) return { estado: "entidade_nao_encontrada", evento, acoesExecutadas };
@@ -107,7 +121,3 @@ export class RuntimeMemoria implements RuntimeGoodle {
     return { estado: "executado", evento, acoesExecutadas };
   }
 
-  entidades(): EntidadeMemoria[] {
-    return this.estadoEntidades.map((entidade) => ({ ...entidade, ...(entidade.posicao ? { posicao: { ...entidade.posicao } } : {}), ...(entidade.propriedades ? { propriedades: { ...entidade.propriedades } } : {}) }));
-  }
-}

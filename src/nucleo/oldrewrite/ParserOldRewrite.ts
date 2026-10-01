@@ -101,6 +101,24 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
     }
   }
 
+  if (comando === "dormir" || comando === "sleep") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    if (["fisica", "physics"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.sleep", "mundo", {}), linha);
+  }
+  if (comando === "acordar" || comando === "wake") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    if (["fisica", "physics"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.acordar", "mundo", {}), linha);
+  }
+  if (comando === "estado" || comando === "state") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    if (["repouso", "rest"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.estado_repouso", "mundo", {}), linha);
+  }
+  if (comando === "limiar" || comando === "threshold") {
+    const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
+    const valor = numero(partes[2]);
+    if (["repouso", "rest"].includes(tipo ?? "") && valor !== undefined && partes.length === 3) return comLinha(criarNoSemantico("fisica.limiar_repouso", "mundo", { valor }), linha);
+  }
+
   if (comando === "contatos" || comando === "contacts") {
     const tipo = partes[1]?.toLocaleLowerCase("pt-BR");
     if (["persistentes", "persistent"].includes(tipo ?? "") && partes.length === 2) return comLinha(criarNoSemantico("fisica.contatos_persistentes", "mundo", {}), linha);

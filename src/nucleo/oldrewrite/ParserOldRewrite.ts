@@ -85,10 +85,6 @@ function parseLinha(texto: string, linha: number): GoodleIRNode {
 
   if (comando === "quando" || comando === "when") {
     const primeiro = partes[1]?.toLocaleLowerCase("pt-BR");
-    const segundo = partes[2]?.toLocaleLowerCase("pt-BR");
-    const terceiro = partes[3]?.toLocaleLowerCase("pt-BR");
-    const quarto = partes[4]?.toLocaleLowerCase("pt-BR");
-
     if ((primeiro === "iniciar" || primeiro === "start") && partes.length === 2) {
       return comLinha(criarNoSemantico("quando", "comportamento", { evento: "evento.iniciar" }), linha);
     }

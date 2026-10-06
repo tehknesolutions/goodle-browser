@@ -2,14 +2,14 @@ import { describe,expect,it } from "vitest";
 import { readHnkTargetEnvelope } from "./HnkTargetEnvelope";
 import { createHakodanPortalVisualProof } from "./HakodanPortalBrowserProof";
 
-const envelope=(state:"closed"|"open")=>({schema:"hnk.target-envelope.v1",target:"goodle-browser",kind:"portal-state",snapshot:{id:"portal-1",state}});
+const envelope=(state:"closed"|"open")=>({schema:"hnk.target-envelope.v1",target:"goodle-browser",kind:"portal-state",revision:3,snapshot:{id:"portal-1",state}});
 
 describe("HNK envelope browser proof boundary",()=>{
  it("maps open envelope to open manifestation intent without claiming render",()=>{
-  expect(createHakodanPortalVisualProof(readHnkTargetEnvelope(envelope("open")))).toEqual({id:"portal-1",canonicalState:"open",visualState:"open",rendered:false,manifestation:"portal-open"});
+  expect(createHakodanPortalVisualProof(readHnkTargetEnvelope(envelope("open")).snapshot)).toEqual({id:"portal-1",canonicalState:"open",visualState:"open",rendered:false,manifestation:"portal-open"});
  });
  it("maps closed envelope to closed manifestation intent without claiming render",()=>{
-  expect(createHakodanPortalVisualProof(readHnkTargetEnvelope(envelope("closed")))).toEqual({id:"portal-1",canonicalState:"closed",visualState:"closed",rendered:false,manifestation:"portal-closed"});
+  expect(createHakodanPortalVisualProof(readHnkTargetEnvelope(envelope("closed")).snapshot)).toEqual({id:"portal-1",canonicalState:"closed",visualState:"closed",rendered:false,manifestation:"portal-closed"});
  });
  it("fails explicitly when envelope is missing",()=>{
   expect(()=>readHnkTargetEnvelope(undefined)).toThrow("GOODLE_HNK_TARGET_ENVELOPE_MISSING");

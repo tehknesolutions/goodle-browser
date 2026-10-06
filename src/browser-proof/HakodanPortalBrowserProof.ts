@@ -9,7 +9,7 @@ export function createHakodanPortalVisualProof(portal: HakodanPortalSnapshot) {
     id: reflected.id,
     canonicalState: reflected.canonicalState,
     visualState: reflected.visualState,
-    rendered: true as const,
+    rendered: false as const,
     manifestation:
       reflected.visualState === "open"
         ? ("portal-open" as const)

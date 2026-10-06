@@ -1,12 +1,19 @@
 import { describe,expect,it } from "vitest";
 import { readHnkTargetEnvelope } from "./HnkTargetEnvelope";
 
-const envelope=(state:"closed"|"open"="open")=>({schema:"hnk.target-envelope.v1",target:"goodle-browser",kind:"portal-state",snapshot:{id:"portal-1",state}});
+const envelope=(state:"closed"|"open"="open",revision:number=3)=>({schema:"hnk.target-envelope.v1",target:"goodle-browser",kind:"portal-state",revision,snapshot:{id:"portal-1",state}});
 
-describe("HNK Target Envelope v1",()=>{
- it("unpacks exact open and closed portal envelopes",()=>{
-  expect(readHnkTargetEnvelope(envelope("open"))).toEqual({id:"portal-1",state:"open"});
-  expect(readHnkTargetEnvelope(envelope("closed"))).toEqual({id:"portal-1",state:"closed"});
+describe("HNK Target Envelope v1 live revision",()=>{
+ it("unpacks exact open and closed live envelopes",()=>{
+  expect(readHnkTargetEnvelope(envelope("open",3))).toEqual({revision:3,snapshot:{id:"portal-1",state:"open"}});
+  expect(readHnkTargetEnvelope(envelope("closed",2))).toEqual({revision:2,snapshot:{id:"portal-1",state:"closed"}});
+ });
+ it("rejects old shape and invalid revisions",()=>{
+  const {revision,...old}=envelope();
+  expect(()=>readHnkTargetEnvelope(old)).toThrow("GOODLE_HNK_TARGET_ENVELOPE_INVALID");
+  for(const bad of [0,-1,1.5,Number.MAX_SAFE_INTEGER+1,"3"]){
+   expect(()=>readHnkTargetEnvelope({...envelope(),revision:bad})).toThrow("GOODLE_HNK_TARGET_ENVELOPE_INVALID");
+  }
  });
  it("rejects missing, unsupported schema, wrong target and wrong kind",()=>{
   expect(()=>readHnkTargetEnvelope(undefined)).toThrow("GOODLE_HNK_TARGET_ENVELOPE_MISSING");

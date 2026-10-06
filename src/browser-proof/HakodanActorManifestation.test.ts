@@ -1,0 +1,7 @@
+import {describe,expect,it,vi} from "vitest";import {createHakodanActorManifestationRegistry} from "./HakodanActorManifestation";
+const accepted=(revision:number,x:number,id="alakazam",disposition:"created"|"updated"="updated")=>({id,receivedRevision:revision,acceptedRevision:revision,x,y:0,disposition,accepted:true as const});
+describe("retained actor manifestation",()=>{
+ it("reuses the same handle across canonical movement",()=>{const handle={id:"alakazam"},create=vi.fn(()=>handle),update=vi.fn(),registry=createHakodanActorManifestationRegistry({create,update});expect(registry.apply(accepted(1,1,"alakazam","created")).handle).toBe(handle);expect(registry.apply(accepted(2,2)).handle).toBe(handle);expect(registry.apply(accepted(3,3)).handle).toBe(handle);expect(create).toHaveBeenCalledTimes(1);expect(update).toHaveBeenCalledTimes(2);});
+ it("does not draw rejected dispositions",()=>{const update=vi.fn(),registry=createHakodanActorManifestationRegistry({create:vi.fn(()=>({})),update});registry.apply(accepted(3,3,"alakazam","created"));for(const disposition of ["duplicate","stale","conflict"] as const)registry.apply({id:"alakazam",receivedRevision:3,acceptedRevision:3,x:3,y:0,disposition,accepted:false});expect(update).not.toHaveBeenCalled();});
+ it("keeps actor identities distinct",()=>{const create=vi.fn((id:string)=>({id})),registry=createHakodanActorManifestationRegistry({create,update:vi.fn()});expect(registry.apply(accepted(1,1,"a","created")).handle).not.toBe(registry.apply(accepted(1,9,"b","created")).handle);});
+});

@@ -14,6 +14,6 @@ export function readHnkCanonicalInteractionResult(value:unknown){
  const intent=r.interaction;if(!intent||typeof intent!=="object"||Array.isArray(intent)||!exact(intent,INTENT))invalid();
  const i=intent as Record<string,unknown>;if(i.actorId!==a.id||i.interaction!=="enter"||i.targetId!==r.targetId)invalid();
  let envelope;try{envelope=readHnkTargetEnvelope(r.targetEnvelope);}catch{invalid();}
- if(envelope.revision!==r.worldRevision)invalid();
+ if(envelope.revision!==r.worldRevision||envelope.snapshot.id!==r.targetId)invalid();
  return {accepted:true,reason:"entered",interaction:{actorId:i.actorId,interaction:"enter",targetId:i.targetId},actor:{id:a.id,x:a.x,y:a.y},targetId:r.targetId,interactionRevision:r.interactionRevision,worldRevision:r.worldRevision,targetEnvelope:{schema:"hnk.target-envelope.v1",target:"goodle-browser",kind:"portal-state",revision:envelope.revision,snapshot:{...envelope.snapshot}}};
 }

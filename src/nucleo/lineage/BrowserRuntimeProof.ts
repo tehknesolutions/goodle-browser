@@ -6,6 +6,13 @@ export type BrowserRuntimeObservationV1 = {
   react: { mounted: boolean; text: string; runtime: "react@19" };
   phaser: { booted: boolean; canvas_present: boolean; scene_key: string; width: number; height: number; runtime: "phaser@3" };
   hakodan: {
+    interaction?: {
+      accepted: boolean;
+      rendered: boolean;
+      interactionRevision?: number;
+      disposition?: "created" | "updated" | "duplicate" | "stale" | "conflict";
+      world?: unknown;
+    };
     portal: {
       id: string;
       receivedRevision: number;

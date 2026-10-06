@@ -1,0 +1,8 @@
+import {describe,expect,it,vi} from "vitest";
+import {createHakodanPortalEntryManifestation} from "./HakodanPortalEntryManifestation";
+const accepted={accepted:true,disposition:"created",interaction:{actorId:"alakazam",interaction:"enter",targetId:"portal-1"},actor:{id:"alakazam",x:3,y:0},targetId:"portal-1",interactionRevision:4,worldRevision:4,targetEnvelope:{snapshot:{id:"portal-1",state:"open"}}};
+describe("portal entry manifestation",()=>{
+ it("retains actor and portal handles on accepted entry",()=>{const actor={},portal={},createActor=vi.fn(()=>actor),createPortal=vi.fn(()=>portal),update=vi.fn();const m=createHakodanPortalEntryManifestation({actor:{create:createActor},portal:{create:createPortal,update}});const first=m.apply(accepted);expect(first.actorHandle).toBe(actor);expect(first.portalHandle).toBe(portal);expect(m.apply({...accepted,disposition:"updated",interactionRevision:5,worldRevision:5,targetEnvelope:{snapshot:{id:"portal-1",state:"open"}}}).portalHandle).toBe(portal);expect(createActor).toHaveBeenCalledTimes(1);expect(createPortal).toHaveBeenCalledTimes(1);});
+ it("does not manifest rejected ordering states",()=>{const update=vi.fn(),m=createHakodanPortalEntryManifestation({actor:{create:vi.fn(()=>({}))},portal:{create:vi.fn(()=>({})),update}});m.apply(accepted);for(const disposition of ["duplicate","stale","conflict"] as const)m.apply({...accepted,disposition,accepted:false});expect(update).toHaveBeenCalledTimes(0);});
+ it("does not fabricate a destination",()=>{const m=createHakodanPortalEntryManifestation({actor:{create:vi.fn(()=>({}))},portal:{create:vi.fn(()=>({})),update:vi.fn()}});const result=m.apply(accepted);expect(result.destination).toBeUndefined();});
+});

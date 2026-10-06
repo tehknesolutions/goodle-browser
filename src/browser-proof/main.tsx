@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import Phaser from "phaser";
 import { createHakodanPortalVisualProof } from "./HakodanPortalBrowserProof";
+import { readHakodanPortalInput } from "./HakodanPortalInput";
 
 type PortalProof = ReturnType<typeof createHakodanPortalVisualProof>;
 type BrowserProof = {
@@ -11,7 +12,12 @@ type BrowserProof = {
   hakodan: { portal: PortalProof };
 };
 
-declare global { interface Window { __GOODLE_BROWSER_PROOF__?: BrowserProof } }
+declare global {
+  interface Window {
+    __GOODLE_BROWSER_PROOF__?: BrowserProof;
+    __HAKODAN_PORTAL_STATE__?: unknown;
+  }
+}
 
 function ReactProof() {
   return <article data-goodle-browser-proof="react" data-runtime="react@19" data-mounted="true">Goodle React Browser Runtime Proof</article>;
@@ -22,7 +28,7 @@ if(!reactHost) throw new Error("GOODLE_REACT_PROOF_HOST_MISSING");
 createRoot(reactHost).render(<StrictMode><ReactProof /></StrictMode>);
 
 const sceneKey="GoodleBrowserProofScene";
-const canonicalPortal={id:"portal-1",state:"open" as const};
+const canonicalPortal=readHakodanPortalInput(window.__HAKODAN_PORTAL_STATE__);
 const portalProof=createHakodanPortalVisualProof(canonicalPortal);
 
 class GoodleBrowserProofScene extends Phaser.Scene {
